@@ -44,3 +44,18 @@ def test_replace() -> None:
     extend_document.replace("Hello", "Goodbye")
 
     assert doc.paragraphs[0].text == "Goodbye, world!"
+
+
+def test_insert_paragraph() -> None:
+    """Test inserting a paragraph into a document."""
+    doc = docx.Document()
+    doc.add_paragraph("Hello, world!")
+    doc.add_paragraph("Goodbye, world!")
+    extend_document = document.ExtendDocument(doc)
+    new_paragraph = docx.Document().add_paragraph("Maintain, world!")
+
+    extend_document.insert_paragraph(new_paragraph, 1)
+
+    assert doc.paragraphs[0].text == "Hello, world!"
+    assert doc.paragraphs[1].text == "Maintain, world!"
+    assert doc.paragraphs[2].text == "Goodbye, world!"
