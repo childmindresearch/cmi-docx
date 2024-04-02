@@ -61,20 +61,44 @@ class ExtendDocument:
         for run_find in run_finder:
             run_find.replace(replace)
 
-    def insert_paragraph(
+    def insert_paragraph_by_text(
         self,
-        paragraph: docx_paragraph.Paragraph,
         index: int,
-    ) -> None:
-        """Inserts a paragraph at a given index.
+        text: str,
+        style: str | None = None,
+    ) -> docx_paragraph.Paragraph:
+        """Inserts a paragraph into a document.
 
         Args:
-            paragraph: The paragraph to insert.
             index: The index to insert the paragraph at.
+            text: The text to insert.
+            style: The style to apply to the text.
+
+        Returns:
+            The new paragraph.
+        """
+        new_paragraph = self._insert_empty_paragraph(index)
+        new_paragraph.add_run(text, style=style)
+        return new_paragraph
+
+    def insert_paragraph_by_object(
+        self,
+        index: int,
+        paragraph: docx_paragraph.Paragraph,
+    ) -> docx_paragraph.Paragraph:
+        """Inserts a paragraph into a document.
+
+        Args:
+            index: The index to insert the paragraph at.
+            paragraph: The paragraph to insert.
+
+        Returns:
+            The new paragraph.
         """
         new_paragraph = self._insert_empty_paragraph(index)
         for paragraph_run in paragraph.runs:
             new_paragraph.add_run(paragraph_run.text, paragraph_run.style)
+        return new_paragraph
 
     def insert_image(
         self,
