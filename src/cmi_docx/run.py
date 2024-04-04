@@ -1,12 +1,9 @@
 """Module for extending python-docx Run objects."""
 
-import dataclasses
-
 from docx import shared
 from docx.text import paragraph as docx_paragraph
 
 
-@dataclasses.dataclass
 class FindRun:
     """Data class for maintaing find results in runs.
 
@@ -18,9 +15,22 @@ class FindRun:
             the text. The second index is the end of the text in the last run.
     """
 
-    paragraph: docx_paragraph.Paragraph
-    run_indices: tuple[int, int]
-    character_indices: tuple[int, int]
+    def __init__(
+        self,
+        paragraph: docx_paragraph.Paragraph,
+        run_indices: tuple[int, int],
+        character_indices: tuple[int, int],
+    ) -> None:
+        """Initializes a FindRun object.
+
+        Args:
+            paragraph: The paragraph containing the text.
+            run_indices: The run indices of the text needle's start and end.
+            character_indices: The character indices of the text in the runs.
+        """
+        self.paragraph = paragraph
+        self.run_indices = run_indices
+        self.character_indices = character_indices
 
     @property
     def runs(self) -> list[docx_paragraph.Run]:
@@ -35,16 +45,18 @@ class FindRun:
         """
         start = self.character_indices[0]
         end = self.character_indices[1]
-        if len(self.runs) > 1:
-            self.runs[0].text = (
-                self.runs[0].text[:start] + replace + self.runs[-1].text[end:]
-            )
-        else:
+
+        if len(self.runs) == 1:
             self.runs[0].text = (
                 self.runs[0].text[:start] + replace + self.runs[0].text[end:]
             )
-        self.run_indices = (self.run_indices[0], self.run_indices[0])
+        else:
+            self.runs[0].text = self.runs[0].text[:start] + replace
+            for run in self.runs[1:-1]:
+                run.clear()
+            self.runs[-1].text = self.runs[-1].text[end:]
         self.character_indices = (start, start + len(replace))
+        self.run_indices = (self.run_indices[0], self.run_indices[0])
 
     def __lt__(self, other: "FindRun") -> bool:
         """Sorts FindRun in order of appearance in the paragraph.
