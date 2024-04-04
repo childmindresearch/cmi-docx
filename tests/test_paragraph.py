@@ -58,7 +58,12 @@ def test_find_in_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
 
     actual = extend_paragraph.find_in_runs("is")
 
-    assert actual == expected
+    assert actual[0].paragraph.text == expected[0].paragraph.text
+    assert actual[0].run_indices == expected[0].run_indices
+    assert actual[0].character_indices == expected[0].character_indices
+    assert actual[1].paragraph.text == expected[1].paragraph.text
+    assert actual[1].run_indices == expected[1].run_indices
+    assert actual[1].character_indices == expected[1].character_indices
 
 
 def test_replace_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:

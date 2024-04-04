@@ -46,6 +46,19 @@ def test_replace() -> None:
     assert doc.paragraphs[0].text == "Goodbye, world!"
 
 
+def test_replace_across_runs() -> None:
+    """Test replacing text across runs in a document."""
+    doc = docx.Document()
+    paragraph = doc.add_paragraph("Hello, world!")
+    paragraph.add_run(" Maintain, World!")
+    paragraph.add_run(" Goodbye, World!")
+    extend_document = document.ExtendDocument(doc)
+
+    extend_document.replace("world! Maintain, World! Goodbye", "Goodbye")
+
+    assert doc.paragraphs[0].text == "Hello, Goodbye, World!"
+
+
 def test_insert_paragraph_by_object() -> None:
     """Test inserting a paragraph into a document."""
     doc = docx.Document()
