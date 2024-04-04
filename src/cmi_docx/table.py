@@ -4,7 +4,7 @@ from docx import oxml, table
 from docx.enum import text
 from docx.oxml import ns
 
-from cmi_docx import paragraph, utils
+from cmi_docx import paragraph
 
 
 class ExtendCell:
@@ -60,11 +60,23 @@ class ExtendCell:
         if background_rgb is not None:
             shading = oxml.parse_xml(
                 (
-                    r'<w:shd {} w:fill="'
-                    + f"{utils.rgb_to_hex(*background_rgb)}"
-                    + r'"/>'
+                    r'<w:shd {} w:fill="' + f"{rgb_to_hex(*background_rgb)}" + r'"/>'
                 ).format(
                     ns.nsdecls("w"),
                 ),
             )
             self.cell._tc.get_or_add_tcPr().append(shading)  # noqa: SLF001
+
+
+def rgb_to_hex(r: int, g: int, b: int) -> str:
+    """Converts RGB values to a hexadecimal color code.
+
+    Args:
+        r: The red component of the RGB color.
+        g: The green component of the RGB color.
+        b: The blue component of the RGB color.
+
+    Returns:
+        The hexadecimal color code representing the RGB color.
+    """
+    return f"#{r:02x}{g:02x}{b:02x}".upper()

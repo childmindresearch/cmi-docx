@@ -4,17 +4,10 @@ Child Mind Institute values the security of our users, data, and servers. We tak
 
 ## Supported Versions
 
-MODIFY:
-
-Note which version(s) will receive security updates. For example:
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| 0.9.x   | :x:                |
+Only the most recent version will receive security updates.
 
 ## Reporting Vulnerabilities
 
-To report security vulnerabilities, please do NOT use our issues page. Instead, kindly email us at reinder.vosdewael@childmind.org. Please refrain from using other communication channels.
+To report security vulnerabilities, please do NOT use our issues page. Instead, kindly email us at dair@childmind.org. Please refrain from using other communication channels.
 
 For non-security-related issues, we welcome your input and feedback on our issues page. Feel free to share your ideas and suggestions to help us improve our services.

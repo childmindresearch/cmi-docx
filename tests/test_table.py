@@ -2,7 +2,7 @@
 
 import pytest
 
-from cmi_docx import utils
+from cmi_docx import table
 
 
 @pytest.mark.parametrize(
@@ -30,4 +30,4 @@ def test_rgb_to_hex(
     hexadecimal: str,
 ) -> None:
     """Tests converting RGB to hex."""
-    assert utils.rgb_to_hex(*rgb) == hexadecimal
+    assert table.rgb_to_hex(*rgb) == hexadecimal
