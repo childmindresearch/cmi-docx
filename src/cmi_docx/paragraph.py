@@ -64,14 +64,18 @@ class ExtendParagraph:
         Returns:
             The indices of the text in the paragraph.
         """
+        if len(needle) == 0:
+            return []
+
         run_finds: list[run.FindRun] = []
         run_lengths = [len(run.text) for run in self.paragraph.runs]
         cumulative_run_lengths = list(itertools.accumulate(run_lengths))
         for occurence in self.find_in_paragraph(needle).character_indices:
             start_run = bisect.bisect_right(cumulative_run_lengths, occurence[0])
             end_run = bisect.bisect_right(
-                cumulative_run_lengths, occurence[1], lo=start_run
+                cumulative_run_lengths[:-1], occurence[1], lo=start_run
             )
+
             start_index = (
                 occurence[0] - cumulative_run_lengths[start_run - 1]
                 if start_run > 0

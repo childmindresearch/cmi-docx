@@ -1,6 +1,7 @@
 """Tests for the document module."""
 
 import docx
+import pytest
 
 from cmi_docx import document
 
@@ -35,28 +36,58 @@ def test_find_in_runs() -> None:
     assert actual[2].character_indices == (14, 19)
 
 
-def test_replace() -> None:
+@pytest.mark.parametrize(
+    ("runs", "needle", "replace", "expected"),
+    [
+        (
+            ["Hello, world!"],
+            "Hello",
+            "Goodbye",
+            "Goodbye, world!",
+        ),
+        (
+            ["Hello, world!", " Hello!"],
+            "Hello",
+            "Goodbye",
+            "Goodbye, world! Goodbye!",
+        ),
+        (
+            ["Hello {{", "FULL_NAME}}"],
+            "{{FULL_NAME}}",
+            'Shizuka "Lea" Sakai',
+            'Hello Shizuka "Lea" Sakai',
+        ),
+        (
+            ["This is James", " Bond ", "007!"],
+            "James Bond 007",
+            "Patrick",
+            "This is Patrick!",
+        ),
+        (
+            ["This is Alec", " Travelyan ", "006!"],
+            "This is Alec Travelyan 006!",
+            "",
+            "",
+        ),
+        (
+            ["This", " is ", "Patrick!"],
+            "",
+            "Nonsense",
+            "This is Patrick!",
+        ),
+    ],
+)
+def test_replace(runs: list[str], needle: str, replace: str, expected: str) -> None:
     """Test replacing text in a document."""
     doc = docx.Document()
-    doc.add_paragraph("Hello, world!")
+    paragraph = doc.add_paragraph(runs[0])
+    for run in runs[1:]:
+        paragraph.add_run(run)
     extend_document = document.ExtendDocument(doc)
 
-    extend_document.replace("Hello", "Goodbye")
+    extend_document.replace(needle, replace)
 
-    assert doc.paragraphs[0].text == "Goodbye, world!"
-
-
-def test_replace_across_runs() -> None:
-    """Test replacing text across runs in a document."""
-    doc = docx.Document()
-    paragraph = doc.add_paragraph("Hello, world!")
-    paragraph.add_run(" Maintain, World!")
-    paragraph.add_run(" Goodbye, World!")
-    extend_document = document.ExtendDocument(doc)
-
-    extend_document.replace("world! Maintain, World! Goodbye", "Goodbye")
-
-    assert doc.paragraphs[0].text == "Hello, Goodbye, World!"
+    assert doc.paragraphs[0].text == expected
 
 
 def test_insert_paragraph_by_object() -> None:
