@@ -36,14 +36,13 @@ class ExtendDocument:
             needle: The text to find.
 
         Returns:
-            The indices of the text in the document.
+            The locations of the text in the runs.
         """
-        run_finds: list[run.FindRun] = []
-        for document_paragraph in self.all_paragraphs:
-            run_finds.extend(
-                paragraph.ExtendParagraph(document_paragraph).find_in_runs(needle)
-            )
-        return run_finds
+        return [
+            finder
+            for para in self.all_paragraphs
+            for finder in paragraph.ExtendParagraph(para).find_in_runs(needle)
+        ]
 
     def replace(self, needle: str, replace: str) -> None:
         """Finds and replaces text in a Word document.
