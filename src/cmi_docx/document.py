@@ -1,6 +1,7 @@
 """Extends a python-docx Word document with additional functionality."""
 
 import pathlib
+from typing import Any, Collection
 
 from docx import document
 from docx.text import paragraph as docx_paragraph
@@ -117,6 +118,22 @@ class ExtendDocument:
         new_paragraph = self._insert_empty_paragraph(index)
         run = new_paragraph.add_run()
         run.add_picture(str(image_path), width=width, height=height)
+        return new_paragraph
+
+    def add_paragraph_from_runs(
+        self, text: Collection[str], styles: Collection[dict[str, Any]]
+    ) -> docx_paragraph.Paragraph:
+        """Adds styled runs to a paragraph.
+
+        Args:
+            text: The text of the runs.
+            styles: The styles of the runs, see run.ExtendRun.format for more details.
+        """
+        if len(text) != len(styles):
+            raise ValueError("The text and styles must be the same length.")
+
+        new_paragraph = self.document.add_paragraph()
+        paragraph.ExtendParagraph(new_paragraph).add_styled_runs(text, styles)
         return new_paragraph
 
     @property

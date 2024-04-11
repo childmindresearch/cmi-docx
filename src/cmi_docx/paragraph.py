@@ -4,6 +4,7 @@ import bisect
 import dataclasses
 import itertools
 import re
+from typing import Any, Collection
 
 from docx.enum import text
 from docx.text import paragraph as docx_paragraph
@@ -110,6 +111,22 @@ class ExtendParagraph:
 
         for run_find in run_finder:
             run_find.replace(replace)
+
+    def add_styled_runs(
+        self, text: Collection[str], styles: Collection[dict[str, Any]]
+    ) -> None:
+        """Adds styled runs to a paragraph.
+
+        Args:
+            text: The text of the runs.
+            styles: The styles of the runs, see run.ExtendRun.format for more details.
+        """
+        if len(text) != len(styles):
+            raise ValueError("The text and styles must be the same length.")
+
+        for run_text, run_style in zip(text, styles):
+            this_run = self.paragraph.add_run(run_text)
+            run.ExtendRun(this_run).format(**run_style)
 
     def format(
         self,
