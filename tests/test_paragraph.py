@@ -86,3 +86,20 @@ def test_replace_multiple_runs(sample_paragraph: docx_paragraph.Paragraph) -> No
         sample_paragraph.text
         == "That was a sample paragraph. That was a sample paragraph."
     )
+
+
+def test_add_styled_runs(sample_paragraph: docx_paragraph.Paragraph) -> None:
+    """Test adding styled runs to a paragraph."""
+    extend_paragraph = paragraph.ExtendParagraph(sample_paragraph)
+    base_runs = len(sample_paragraph.runs)
+
+    text = ["Hello", "World"]
+    styles = [{"bold": True}, {"italics": True, "underline": True}]
+
+    extend_paragraph.add_styled_runs(text, styles)
+
+    assert sample_paragraph.runs[base_runs].text == "Hello"
+    assert sample_paragraph.runs[base_runs].bold
+    assert sample_paragraph.runs[base_runs + 1].text == "World"
+    assert sample_paragraph.runs[base_runs + 1].italic
+    assert sample_paragraph.runs[base_runs + 1].underline
