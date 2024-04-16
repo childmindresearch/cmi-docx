@@ -88,18 +88,52 @@ def test_replace_multiple_runs(sample_paragraph: docx_paragraph.Paragraph) -> No
     )
 
 
-def test_add_styled_runs(sample_paragraph: docx_paragraph.Paragraph) -> None:
-    """Test adding styled runs to a paragraph."""
-    extend_paragraph = paragraph.ExtendParagraph(sample_paragraph)
-    base_runs = len(sample_paragraph.runs)
+def test_insert_run_middle() -> None:
+    """Test inserting a run into a paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph("")
+    para.add_run("Hello ")
+    para.add_run("world!")
+    extend_paragraph = paragraph.ExtendParagraph(para)
 
-    text = ["Hello", "World"]
-    styles = [{"bold": True}, {"italics": True, "underline": True}]
+    extend_paragraph.insert_run(1, "beautiful ", {"bold": True})
 
-    extend_paragraph.add_styled_runs(text, styles)
+    assert para.text == "Hello beautiful world!"
+    assert para.runs[1].bold
 
-    assert sample_paragraph.runs[base_runs].text == "Hello"
-    assert sample_paragraph.runs[base_runs].bold
-    assert sample_paragraph.runs[base_runs + 1].text == "World"
-    assert sample_paragraph.runs[base_runs + 1].italic
-    assert sample_paragraph.runs[base_runs + 1].underline
+
+def test_insert_run_start() -> None:
+    """Test inserting a run at the start of a paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph("world!")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.insert_run(0, "Hello ", {"bold": True})
+
+    assert para.text == "Hello world!"
+    assert para.runs[0].bold
+
+
+@pytest.mark.parametrize("index", [-1, 1])
+def test_insert_run_end(index: int) -> None:
+    """Test inserting a run at the end of a paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph("Hello")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.insert_run(index, " world!", {"bold": True})
+
+    assert para.text == "Hello world!"
+    assert para.runs[1].bold
+
+
+def test_insert_run_empty() -> None:
+    """Test inserting a run into an empty paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph("")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.insert_run(0, "Hello", {"bold": True})
+
+    assert para.text == "Hello"
+    assert para.runs[0].bold
