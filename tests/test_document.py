@@ -117,31 +117,3 @@ def test_insert_paragraph_by_text() -> None:
     assert doc.paragraphs[0].text == "Hello, world!"
     assert doc.paragraphs[1].text == "Maintain, world!"
     assert doc.paragraphs[2].text == "Goodbye, world!"
-
-
-def test_add_paragraph_from_runs() -> None:
-    """Test adding styled runs to a paragraph."""
-    doc = docx.Document()
-    extend_document = document.ExtendDocument(doc)
-
-    text = ["Hello ", "world!"]
-    styles = [{"bold": True}, {"bold": False}]
-
-    new_paragraph = extend_document.add_paragraph_from_runs(text, styles)
-
-    assert len(doc.paragraphs) == 1
-    assert doc.paragraphs[0].text == "Hello world!" == new_paragraph.text
-    assert doc.paragraphs[0].runs[0].bold
-    assert not doc.paragraphs[0].runs[1].bold
-
-
-def test_add_paragraph_from_runs_invalid_length() -> None:
-    """Test adding styled runs to a paragraph with invalid length of text and styles."""
-    doc = docx.Document()
-    extend_document = document.ExtendDocument(doc)
-
-    text = ["Hello", "world!"]
-    styles = [{"bold": True}]
-
-    with pytest.raises(ValueError):
-        extend_document.add_paragraph_from_runs(text, styles)

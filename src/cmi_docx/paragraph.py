@@ -4,10 +4,11 @@ import bisect
 import dataclasses
 import itertools
 import re
-from typing import Any, Collection
+from typing import Any
 
 from docx.enum import text
 from docx.text import paragraph as docx_paragraph
+from docx.text import run as docx_run
 
 from cmi_docx import run
 
@@ -97,12 +98,15 @@ class ExtendParagraph:
             )
         return run_finds
 
-    def replace(self, needle: str, replace: str) -> None:
+    def replace(
+        self, needle: str, replace: str, style: dict[str, Any] | None = None
+    ) -> None:
         """Finds and replaces text in a Word paragraph.
 
         Args:
             needle: The text to find.
             replace: The text to replace.
+            style: The style to apply to the replacement text.
         """
         run_finder = self.find_in_runs(needle)
         run_finder.sort(
@@ -110,23 +114,31 @@ class ExtendParagraph:
         )
 
         for run_find in run_finder:
-            run_find.replace(replace)
+            run_find.replace(replace, style)
 
-    def add_styled_runs(
-        self, text: Collection[str], styles: Collection[dict[str, Any]]
-    ) -> None:
-        """Adds styled runs to a paragraph.
+    def insert_run(self, index: int, text: str, style: dict[str, Any]) -> docx_run.Run:
+        """Inserts a run into a paragraph.
 
         Args:
-            text: The text of the runs.
-            styles: The styles of the runs, see run.ExtendRun.format for more details.
-        """
-        if len(text) != len(styles):
-            raise ValueError("The text and styles must be the same length.")
+            index: The index to insert the run at.
+            text: The text of the run.
+            style: The style of the run, see run.ExtendRun.format for more details.
 
-        for run_text, run_style in zip(text, styles):
-            this_run = self.paragraph.add_run(run_text)
-            run.ExtendRun(this_run).format(**run_style)
+        Returns:
+            The inserted run.
+        """
+        if index == len(self.paragraph.runs):
+            self.paragraph.add_run(text)
+        else:
+            new_run = self.paragraph._element._new_r()
+            new_run.text = text
+            if index < 0:
+                self.paragraph.runs[index]._element.addnext(new_run)
+            else:
+                self.paragraph.runs[index]._element.addprevious(new_run)
+
+        run.ExtendRun(self.paragraph.runs[index]).format(**style)
+        return self.paragraph.runs[index]
 
     def format(
         self,
