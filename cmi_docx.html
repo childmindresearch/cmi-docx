@@ -23,13 +23,11 @@
 
             <h2>Contents</h2>
             <ul>
-  <li><a href="#cmi-dair-template-python-repository">CMI-DAIR Template Python Repository</a></li>
-  <li><a href="#project-name">Project name</a>
+  <li><a href="#cmi-docx">CMI-docx</a>
   <ul>
     <li><a href="#features">Features</a></li>
     <li><a href="#installation">Installation</a></li>
     <li><a href="#quick-start">Quick start</a></li>
-    <li><a href="#links-or-references">Links or References</a></li>
   </ul></li>
 </ul>
 
@@ -56,24 +54,7 @@
                     <h1 class="modulename">
 cmi_docx    </h1>
 
-                        <div class="docstring"><p><a href="https://zenodo.org/doi/10.5281/zenodo.10383685"><img src="https://zenodo.org/badge/657341621.svg" alt="DOI" /></a></p>
-
-<h1 id="cmi-dair-template-python-repository">CMI-DAIR Template Python Repository</h1>
-
-<p>Welcome to the CMI-DAIR Template Python Repository! This template is designed to streamline your project setup and ensure a consistent structure. To get started, follow these steps:</p>
-
-<ul>
-<li><input type="checkbox" class="task-list-item-checkbox" checked disabled> Run <code>setup_template.py</code> to initialize the repository.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> Replace the content of this <code>README.md</code> with details specific to your project.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> Install the <code>pre-commit</code> hooks to ensure code quality on each commit.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> Revise SECURITY.md to reflect supported versions or remove it if not applicable.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> Remove the placeholder src and test files, these are there merely to show how the CI works.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> If it hasn't already been done for your organization/acccount, grant third-party app permissions for CodeCov.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> To set up an API documentation website, after the first successful build, go to the <code>Settings</code> tab of your repository, scroll down to the <code>GitHub Pages</code> section, and select <code>gh-pages</code> as the source. This will generate a link to your API docs.</li>
-<li><input type="checkbox" class="task-list-item-checkbox" disabled> Update stability badge in <code>README.md</code> to reflect the current state of the project. A list of stability badges to copy can be found <a href="https://github.com/orangemug/stability-badges">here</a>. The <a href="https://nodejs.org/docs/latest-v20.x/api/documentation.html#documentation_stability_index">node documentation</a> can be used as a reference for the stability levels.</li>
-</ul>
-
-<h1 id="project-name">Project name</h1>
+                        <div class="docstring"><h1 id="cmi-docx">CMI-docx</h1>
 
 <p><a href="https://github.com/childmindresearch/cmi-docx/actions/workflows/test.yaml?query=branch%3Amain"><img src="https://github.com/childmindresearch/cmi-docx/actions/workflows/test.yaml/badge.svg?branch=main" alt="Build" /></a>
 <a href="https://codecov.io/gh/childmindresearch/cmi-docx"><img src="https://codecov.io/gh/childmindresearch/cmi-docx/branch/main/graph/badge.svg?token=22HWWFWPW5" alt="codecov" /></a>
@@ -82,48 +63,49 @@ cmi_docx    </h1>
 <a href="https://github.com/childmindresearch/cmi-docx/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-LGPL--2.1-blue.svg" alt="LGPL--2.1 License" /></a>
 <a href="https://childmindresearch.github.io/cmi-docx"><img src="https://img.shields.io/badge/api-docs-blue" alt="pages" /></a></p>
 
-<p>What problem does this tool solve?</p>
+<p><code>cmi-docx</code> is a Python library for manipulating .docx files built on top of <code>python-docx</code>. It extends the functionality of <code>python-docx</code> by providing additional features and utilities for working with .docx files.</p>
 
 <h2 id="features">Features</h2>
 
 <ul>
-<li>A few</li>
-<li>Cool</li>
-<li>Things</li>
+<li>Find and replace.</li>
+<li>Insert paragraphs in the middle of a document.</li>
+<li>Manipulate styles and formatting of paragraphs' substrings.</li>
 </ul>
 
 <h2 id="installation">Installation</h2>
 
-<p>Install this package via :</p>
+<p>Install this package from pypi using your favorite package manager. For example, using <code>pip</code>:</p>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>cmi_docx
-</code></pre>
-</div>
-
-<p>Or get the newest development version via:</p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/childmindresearch/cmi-docx
+<pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>cmi-docx
 </code></pre>
 </div>
 
 <h2 id="quick-start">Quick start</h2>
 
-<p>Short tutorial, maybe with a</p>
+<p>The following example demonstratesa few features of cmi-docx:</p>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code><span class="kn">import</span> <span class="nn">cmi_docx</span>
+<pre><span></span><code><span class="kn">import</span> <span class="nn">docx</span>
 
-<span class="n">cmi_docx</span><span class="o">.</span><span class="n">short_example</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">cmi_docx</span> <span class="kn">import</span> <span class="n">document</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">docx</span><span class="o">.</span><span class="n">Document</span><span class="p">()</span>
+<span class="n">paragraph</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">add_paragraph</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
+<span class="n">extend_document</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">ExtendDocument</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="n">extend_paragraph</span> <span class="o">=</span> <span class="n">document</span><span class="o">.</span><span class="n">ExtendParagraph</span><span class="p">(</span><span class="n">paragraph</span><span class="p">)</span>
+
+<span class="c1"># Find and replace text.</span>
+<span class="n">extend_document</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">,</span> <span class="s2">&quot;Hi&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;bold&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+<span class="c1"># Insert and image</span>
+<span class="n">extend_document</span><span class="o">.</span><span class="n">insert_image</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">image_path</span><span class="o">=</span><span class="s2">&quot;path/to/image.png&quot;</span><span class="p">)</span>
+
+<span class="c1"># Reformat a paragraph</span>
+<span class="n">extend_paragraph</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">italics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre>
 </div>
-
-<h2 id="links-or-references">Links or References</h2>
-
-<ul>
-<li><a href="https://www.wikipedia.de">https://www.wikipedia.de</a></li>
-</ul>
 </div>
 
                         <input id="mod-cmi_docx-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
