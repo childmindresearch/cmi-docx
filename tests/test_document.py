@@ -90,6 +90,20 @@ def test_replace(runs: list[str], needle: str, replace: str, expected: str) -> N
     assert doc.paragraphs[0].text == expected
 
 
+def test_replace_with_style() -> None:
+    """Test replacing text in a document with style."""
+    doc = docx.Document()
+    doc.add_paragraph("Hello, world!")
+    extend_document = document.ExtendDocument(doc)
+
+    extend_document.replace("Hello", "Goodbye", {"bold": True})
+
+    assert doc.paragraphs[0].text == "Goodbye, world!"
+    assert not doc.paragraphs[0].runs[0].bold
+    assert doc.paragraphs[0].runs[1].bold
+    assert doc.paragraphs[0].runs[1].text == "Goodbye"
+
+
 def test_insert_paragraph_by_object() -> None:
     """Test inserting a paragraph into a document."""
     doc = docx.Document()

@@ -1,6 +1,7 @@
 """Extends a python-docx Word document with additional functionality."""
 
 import pathlib
+from typing import Any
 
 from docx import document
 from docx.text import paragraph as docx_paragraph
@@ -44,12 +45,15 @@ class ExtendDocument:
             for finder in paragraph.ExtendParagraph(para).find_in_runs(needle)
         ]
 
-    def replace(self, needle: str, replace: str) -> None:
+    def replace(
+        self, needle: str, replace: str, style: dict[str, Any] | None = None
+    ) -> None:
         """Finds and replaces text in a Word document.
 
         Args:
             needle: The text to find.
             replace: The text to replace.
+            style: The style to apply to the replacement text.
 
         """
         run_finder = self.find_in_runs(needle)
@@ -58,7 +62,7 @@ class ExtendDocument:
         )
 
         for run_find in run_finder:
-            run_find.replace(replace)
+            run_find.replace(replace, style)
 
     def insert_paragraph_by_text(
         self,
