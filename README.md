@@ -29,7 +29,6 @@ The following example demonstratesa few features of cmi-docx:
 
 ```Python
 import docx
-import pytest
 
 from cmi_docx import document
 
