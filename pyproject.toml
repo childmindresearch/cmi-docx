@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cmi_docx"
-version = "0.1.5"
+version = "0.1.6"
 description = ".docx utilities"
 authors = ["Reinder Vos de Wael <reinder.vosdewael@childmind.org>"]
 license = "LGPL-2.1"
