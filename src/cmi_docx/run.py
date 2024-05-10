@@ -1,9 +1,9 @@
 """Module for extending python-docx Run objects."""
 
-from typing import Any
-
 from docx import shared
 from docx.text import paragraph as docx_paragraph
+
+from cmi_docx import styles
 
 
 class FindRun:
@@ -40,7 +40,7 @@ class FindRun:
         """Returns the runs containing the text."""
         return self.paragraph.runs[self.run_indices[0] : self.run_indices[1] + 1]
 
-    def replace(self, replace: str, style: dict[str, Any] | None = None) -> None:
+    def replace(self, replace: str, style: styles.RunStyle | None = None) -> None:
         """Replaces the text in the runs with the replacement text.
 
         Args:
@@ -79,7 +79,7 @@ class FindRun:
                 run.clear()
             self.runs[-1].text = self.runs[-1].text[end:]
 
-    def _replace_with_style(self, replace: str, style: dict[str, Any]) -> None:
+    def _replace_with_style(self, replace: str, style: styles.RunStyle) -> None:
         """Replaces the text in the runs with the replacement text and style.
 
         Args:
@@ -95,13 +95,13 @@ class FindRun:
         new_run = self.paragraph._element._new_r()
         new_run.text = replace
         self.paragraph.runs[self.run_indices[0]]._element.addnext(new_run)
-        ExtendRun(self.paragraph.runs[self.run_indices[0] + 1]).format(**style)
+        ExtendRun(self.paragraph.runs[self.run_indices[0] + 1]).format(style)
 
         post_run = self.paragraph._element._new_r()
         post_run.text = post
         self.paragraph.runs[self.run_indices[0] + 1]._element.addnext(post_run)
         pre_style = ExtendRun(self.paragraph.runs[self.run_indices[0]]).get_format()
-        ExtendRun(self.paragraph.runs[self.run_indices[0] + 2]).format(**pre_style)
+        ExtendRun(self.paragraph.runs[self.run_indices[0] + 2]).format(pre_style)
 
     def __lt__(self, other: "FindRun") -> bool:
         """Sorts FindRun in order of appearance in the paragraph.
@@ -135,59 +135,43 @@ class ExtendRun:
         """
         self.run = run
 
-    def format(
-        self,
-        *,
-        bold: bool | None = None,
-        italics: bool | None = None,
-        underline: bool | None = None,
-        superscript: bool | None = None,
-        subscript: bool | None = None,
-        font_size: int | None = None,
-        font_rgb: tuple[int, int, int] | None = None,
-    ) -> None:
+    def format(self, style: styles.RunStyle) -> None:
         """Formats a run in a Word document.
 
         Args:
-            bold: Whether to bold the run.
-            italics: Whether to italicize the run.
-            underline: Whether to underline the run.
-            superscript: Whether to superscript the run.
-            subscript: Whether to subscript the run.
-            font_size: The font size of the run.
-            font_rgb: The font color of the run.
+            style: The style to apply to the run.
         """
-        if superscript and subscript:
+        if style.superscript and style.subscript:
             msg = "Cannot have superscript and subscript at the same time."
             raise ValueError(msg)
 
-        if bold is not None:
-            self.run.bold = bold
-        if italics is not None:
-            self.run.italic = italics
-        if underline is not None:
-            self.run.underline = underline
-        if superscript is not None:
-            self.run.font.superscript = superscript
-        if subscript is not None:
-            self.run.font.subscript = subscript
-        if font_size is not None:
-            self.run.font.size = font_size
-        if font_rgb is not None:
-            self.run.font.color.rgb = shared.RGBColor(*font_rgb)
+        if style.bold is not None:
+            self.run.bold = style.bold
+        if style.italic is not None:
+            self.run.italic = style.italic
+        if style.underline is not None:
+            self.run.underline = style.underline
+        if style.superscript is not None:
+            self.run.font.superscript = style.superscript
+        if style.subscript is not None:
+            self.run.font.subscript = style.subscript
+        if style.font_size is not None:
+            self.run.font.size = style.font_size
+        if style.font_rgb is not None:
+            self.run.font.color.rgb = shared.RGBColor(*style.font_rgb)
 
-    def get_format(self) -> dict[str, Any]:
+    def get_format(self) -> styles.RunStyle:
         """Returns the formatting of the run.
 
         Returns:
             The formatting of the run.
         """
-        return {
-            "bold": self.run.bold,
-            "italics": self.run.italic,
-            "underline": self.run.underline,
-            "superscript": self.run.font.superscript,
-            "subscript": self.run.font.subscript,
-            "font_size": self.run.font.size,
-            "font_rgb": self.run.font.color.rgb,
-        }
+        return styles.RunStyle(
+            bold=self.run.bold,
+            italic=self.run.italic,
+            underline=self.run.underline,
+            superscript=self.run.font.superscript,
+            subscript=self.run.font.subscript,
+            font_size=self.run.font.size,
+            font_rgb=self.run.font.color.rgb,
+        )

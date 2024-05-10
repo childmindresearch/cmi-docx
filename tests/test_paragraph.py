@@ -4,7 +4,7 @@ import docx
 import pytest
 from docx.text import paragraph as docx_paragraph
 
-from cmi_docx import paragraph
+from cmi_docx import paragraph, styles
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def test_insert_run_middle() -> None:
     para.add_run("world!")
     extend_paragraph = paragraph.ExtendParagraph(para)
 
-    extend_paragraph.insert_run(1, "beautiful ", {"bold": True})
+    extend_paragraph.insert_run(1, "beautiful ", styles.RunStyle(bold=True))
 
     assert para.text == "Hello beautiful world!"
     assert para.runs[1].bold
@@ -108,7 +108,7 @@ def test_insert_run_start() -> None:
     para = document.add_paragraph("world!")
     extend_paragraph = paragraph.ExtendParagraph(para)
 
-    extend_paragraph.insert_run(0, "Hello ", {"bold": True})
+    extend_paragraph.insert_run(0, "Hello ", styles.RunStyle(bold=True))
 
     assert para.text == "Hello world!"
     assert para.runs[0].bold
@@ -121,7 +121,7 @@ def test_insert_run_end(index: int) -> None:
     para = document.add_paragraph("Hello")
     extend_paragraph = paragraph.ExtendParagraph(para)
 
-    extend_paragraph.insert_run(index, " world!", {"bold": True})
+    extend_paragraph.insert_run(index, " world!", styles.RunStyle(bold=True))
 
     assert para.text == "Hello world!"
     assert para.runs[1].bold
@@ -133,7 +133,7 @@ def test_insert_run_empty() -> None:
     para = document.add_paragraph("")
     extend_paragraph = paragraph.ExtendParagraph(para)
 
-    extend_paragraph.insert_run(0, "Hello", {"bold": True})
+    extend_paragraph.insert_run(0, "Hello", styles.RunStyle(bold=True))
 
     assert para.text == "Hello"
     assert para.runs[0].bold

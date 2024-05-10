@@ -3,7 +3,7 @@
 import docx
 import pytest
 
-from cmi_docx import run
+from cmi_docx import run, styles
 
 
 def test_find_run_lt_same_paragraph() -> None:
@@ -75,7 +75,7 @@ def test_find_run_replace_with_style() -> None:
     paragraph.add_run("Hello, world!")
 
     find_run = run.FindRun(paragraph, (0, 1), (0, 5))
-    find_run.replace("Goodbye", {"bold": True})
+    find_run.replace("Goodbye", styles.RunStyle(bold=True))
 
     assert paragraph.text == "Goodbye, world!"
     assert not paragraph.runs[0].bold
@@ -91,11 +91,13 @@ def test_extend_run_format() -> None:
 
     extend_run = run.ExtendRun(paragraph_run)
     extend_run.format(
-        bold=True,
-        italics=True,
-        underline=True,
-        superscript=True,
-        font_rgb=(1, 0, 0),
+        styles.RunStyle(
+            bold=True,
+            italic=True,
+            underline=True,
+            superscript=True,
+            font_rgb=(1, 0, 0),
+        )
     )
 
     assert paragraph_run.bold
