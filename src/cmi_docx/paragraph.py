@@ -4,13 +4,12 @@ import bisect
 import dataclasses
 import itertools
 import re
-from typing import Any
 
 from docx.enum import text
 from docx.text import paragraph as docx_paragraph
 from docx.text import run as docx_run
 
-from cmi_docx import run
+from cmi_docx import run, styles
 
 
 @dataclasses.dataclass
@@ -99,7 +98,7 @@ class ExtendParagraph:
         return run_finds
 
     def replace(
-        self, needle: str, replace: str, style: dict[str, Any] | None = None
+        self, needle: str, replace: str, style: styles.RunStyle | None = None
     ) -> None:
         """Finds and replaces text in a Word paragraph.
 
@@ -116,7 +115,7 @@ class ExtendParagraph:
         for run_find in run_finder:
             run_find.replace(replace, style)
 
-    def insert_run(self, index: int, text: str, style: dict[str, Any]) -> docx_run.Run:
+    def insert_run(self, index: int, text: str, style: styles.RunStyle) -> docx_run.Run:
         """Inserts a run into a paragraph.
 
         Args:
@@ -137,7 +136,7 @@ class ExtendParagraph:
             else:
                 self.paragraph.runs[index]._element.addprevious(new_run)
 
-        run.ExtendRun(self.paragraph.runs[index]).format(**style)
+        run.ExtendRun(self.paragraph.runs[index]).format(style)
         return self.paragraph.runs[index]
 
     def format(
@@ -178,8 +177,10 @@ class ExtendParagraph:
 
         for paragraph_run in self.paragraph.runs:
             run.ExtendRun(paragraph_run).format(
-                bold=bold,
-                italics=italics,
-                font_size=font_size,
-                font_rgb=font_rgb,
+                styles.RunStyle(
+                    bold=bold,
+                    italic=italics,
+                    font_size=font_size,
+                    font_rgb=font_rgb,
+                )
             )

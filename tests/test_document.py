@@ -3,7 +3,7 @@
 import docx
 import pytest
 
-from cmi_docx import document
+from cmi_docx import document, styles
 
 
 def test_find_in_paragraphs() -> None:
@@ -96,7 +96,7 @@ def test_replace_with_style() -> None:
     doc.add_paragraph("Hello, world!")
     extend_document = document.ExtendDocument(doc)
 
-    extend_document.replace("Hello", "Goodbye", {"bold": True})
+    extend_document.replace("Hello", "Goodbye", styles.RunStyle(bold=True))
 
     assert doc.paragraphs[0].text == "Goodbye, world!"
     assert not doc.paragraphs[0].runs[0].bold

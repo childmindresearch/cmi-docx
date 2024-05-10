@@ -1,12 +1,11 @@
 """Extends a python-docx Word document with additional functionality."""
 
 import pathlib
-from typing import Any
 
 from docx import document
 from docx.text import paragraph as docx_paragraph
 
-from cmi_docx import paragraph, run
+from cmi_docx import paragraph, run, styles
 
 
 class ExtendDocument:
@@ -46,7 +45,7 @@ class ExtendDocument:
         ]
 
     def replace(
-        self, needle: str, replace: str, style: dict[str, Any] | None = None
+        self, needle: str, replace: str, style: styles.RunStyle | None = None
     ) -> None:
         """Finds and replaces text in a Word document.
 
