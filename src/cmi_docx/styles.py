@@ -36,6 +36,7 @@ class ParagraphStyle:
 class TableStyle:
     """Dataclass for table style arguments."""
 
+    paragraph: ParagraphStyle | None = None
     space_before: float | None = None
     space_after: float | None = None
     background_rgb: tuple[int, int, int] | None = None

@@ -1,10 +1,9 @@
 """Extends a python-docx Table cell with additional functionality."""
 
 from docx import oxml, table
-from docx.enum import text
 from docx.oxml import ns
 
-from cmi_docx import paragraph
+from cmi_docx import paragraph, styles
 
 
 class ExtendCell:
@@ -18,49 +17,22 @@ class ExtendCell:
         """
         self.cell = cell
 
-    def format(
-        self,
-        *,
-        line_spacing: float | None = None,
-        space_before: float | None = None,
-        space_after: float | None = None,
-        bold: bool | None = None,
-        italics: bool | None = None,
-        font_size: int | None = None,
-        font_rgb: tuple[int, int, int] | None = None,
-        background_rgb: tuple[int, int, int] | None = None,
-        alignment: text.WD_PARAGRAPH_ALIGNMENT | None = None,
-    ) -> None:
+    def format(self, style: styles.TableStyle) -> None:
         """Formats a cell in a Word table.
 
         Args:
-            cell: The cell to format.
-            line_spacing: The line spacing of the cell.
-            space_before: The spacing before the cell.
-            space_after: The spacing after the cell.
-            bold: Whether to bold the cell.
-            italics: Whether to italicize the cell.
-            font_size: The font size of the cell.
-            font_rgb: The font color of the cell.
-            background_rgb: The background color of the cell.
-            alignment: The alignment of the cell.
+            style: The style to apply to the cell.
         """
-        for table_paragraph in self.cell.paragraphs:
-            paragraph.ExtendParagraph(table_paragraph).format(
-                line_spacing=line_spacing,
-                bold=bold,
-                italics=italics,
-                font_size=font_size,
-                font_rgb=font_rgb,
-                alignment=alignment,
-                space_after=space_after,
-                space_before=space_before,
-            )
+        if style.paragraph is not None:
+            for table_paragraph in self.cell.paragraphs:
+                paragraph.ExtendParagraph(table_paragraph).format(style.paragraph)
 
-        if background_rgb is not None:
+        if style.background_rgb is not None:
             shading = oxml.parse_xml(
                 (
-                    r'<w:shd {} w:fill="' + f"{rgb_to_hex(*background_rgb)}" + r'"/>'
+                    r'<w:shd {} w:fill="'
+                    + f"{rgb_to_hex(*style.background_rgb)}"
+                    + r'"/>'
                 ).format(
                     ns.nsdecls("w"),
                 ),

@@ -5,7 +5,6 @@ import dataclasses
 import itertools
 import re
 
-from docx.enum import text
 from docx.text import paragraph as docx_paragraph
 from docx.text import run as docx_run
 
@@ -141,46 +140,31 @@ class ExtendParagraph:
 
     def format(
         self,
-        *,
-        bold: bool | None = None,
-        italics: bool | None = None,
-        font_size: int | None = None,
-        font_rgb: tuple[int, int, int] | None = None,
-        line_spacing: float | None = None,
-        space_before: float | None = None,
-        space_after: float | None = None,
-        alignment: text.WD_PARAGRAPH_ALIGNMENT | None = None,
+        style: styles.ParagraphStyle,
     ) -> None:
         """Formats a paragraph in a Word document.
 
         Args:
-            bold: Whether to bold the paragraph.
-            italics: Whether to italicize the paragraph.
-            font_size: The font size of the paragraph.
-            font_rgb: The font color of the paragraph.
-            line_spacing: The line spacing of the paragraph.
-            space_before: The spacing before the paragraph.
-            space_after: The spacing after the paragraph.
-            alignment: The alignment of the paragraph.
+            style: The style to apply to the paragraph.
         """
-        if line_spacing is not None:
-            self.paragraph.paragraph_format.line_spacing = line_spacing
+        if style.line_spacing is not None:
+            self.paragraph.paragraph_format.line_spacing = style.line_spacing
 
-        if alignment is not None:
-            self.paragraph.alignment = alignment
+        if style.alignment is not None:
+            self.paragraph.alignment = style.alignment
 
-        if space_before is not None:
-            self.paragraph.paragraph_format.space_before = space_before
+        if style.space_before is not None:
+            self.paragraph.paragraph_format.space_before = style.space_before
 
-        if space_after is not None:
-            self.paragraph.paragraph_format.space_after = space_after
+        if style.space_after is not None:
+            self.paragraph.paragraph_format.space_after = style.space_after
 
         for paragraph_run in self.paragraph.runs:
             run.ExtendRun(paragraph_run).format(
                 styles.RunStyle(
-                    bold=bold,
-                    italic=italics,
-                    font_size=font_size,
-                    font_rgb=font_rgb,
+                    bold=style.bold,
+                    italic=style.italic,
+                    font_size=style.font_size,
+                    font_rgb=style.font_rgb,
                 )
             )
