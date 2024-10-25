@@ -75,7 +75,9 @@ def test_replace_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
     assert sample_paragraph.text == "This is a example paragraph."
 
 
-def test_replace_multiple_runs(sample_paragraph: docx_paragraph.Paragraph) -> None:
+def test_replace_multiple_runs(
+    sample_paragraph: docx_paragraph.Paragraph,
+) -> None:
     """Test replacing text in multiple runs."""
     sample_paragraph.add_run(" This is a sample paragraph.")
     extend_paragraph = paragraph.ExtendParagraph(sample_paragraph)

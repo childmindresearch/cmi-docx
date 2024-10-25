@@ -1,6 +1,7 @@
 """Module for extending python-docx Run objects."""
 
 from docx import shared
+from docx.enum import text
 from docx.text import paragraph as docx_paragraph
 
 from cmi_docx import styles
@@ -156,7 +157,7 @@ class ExtendRun:
         if style.subscript is not None:
             self.run.font.subscript = style.subscript
         if style.font_size is not None:
-            self.run.font.size = style.font_size
+            self.run.font.size = shared.Pt(style.font_size)
         if style.font_rgb is not None:
             self.run.font.color.rgb = shared.RGBColor(*style.font_rgb)
 
@@ -166,10 +167,16 @@ class ExtendRun:
         Returns:
             The formatting of the run.
         """
+        underline: bool | None
+        if isinstance(self.run.underline, text.WD_UNDERLINE):
+            underline = self.run.underline != text.WD_UNDERLINE.NONE
+        else:
+            underline = self.run.underline
+
         return styles.RunStyle(
             bold=self.run.bold,
             italic=self.run.italic,
-            underline=self.run.underline,
+            underline=underline,
             superscript=self.run.font.superscript,
             subscript=self.run.font.subscript,
             font_size=self.run.font.size,
