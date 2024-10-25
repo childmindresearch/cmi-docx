@@ -67,6 +67,7 @@ class ExtendDocument:
         self,
         index: int,
         text: str,
+        style: str | None = None,
     ) -> docx_paragraph.Paragraph:
         """Inserts a paragraph into a document.
 
@@ -78,7 +79,7 @@ class ExtendDocument:
         Returns:
             The new paragraph.
         """
-        new_paragraph = self._insert_empty_paragraph(index)
+        new_paragraph = self._insert_empty_paragraph(index, style)
         new_paragraph.add_run(text)
         return new_paragraph
 
@@ -133,13 +134,13 @@ class ExtendDocument:
         return all_paragraphs
 
     def _insert_empty_paragraph(
-        self,
-        index: int,
+        self, index: int, style: str | None = None
     ) -> docx_paragraph.Paragraph:
         """Inserts an empty paragraph at a given index.
 
         Args:
             index: The index to insert the paragraph at.
+            style: The style to apply to the paragraph.
 
         Returns:
             The new paragraph.
@@ -149,10 +150,11 @@ class ExtendDocument:
             raise ValueError(f"Index {index} is out of range.")
 
         if index == n_paragraphs:
-            new_paragraph = self.document.add_paragraph()
+            new_paragraph = self.document.add_paragraph(style=style)
         else:
             new_paragraph = new_paragraph = self.document.paragraphs[
                 index
             ]._insert_paragraph_before()
+            new_paragraph.style = style  # type: ignore[assignment] # Mypy ignores setter types.
 
         return new_paragraph
