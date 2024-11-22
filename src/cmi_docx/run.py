@@ -90,8 +90,10 @@ class FindRun:
         start = self.character_indices[0]
         end = self.character_indices[1]
 
-        pre, post = self.runs[0].text[:start], self.runs[0].text[end:]
+        pre, post = self.runs[0].text[:start], self.runs[-1].text[end:]
         self.runs[0].text = pre
+        for index in range(1, len(self.runs)):
+            self.runs[index].text = ""
 
         new_run = self.paragraph._element._new_r()
         new_run.text = replace
