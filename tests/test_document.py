@@ -93,12 +93,15 @@ def test_replace(runs: list[str], needle: str, replace: str, expected: str) -> N
 def test_replace_with_style() -> None:
     """Test replacing text in a document with style."""
     doc = docx.Document()
-    doc.add_paragraph("Hello, world!")
+    paragraph = doc.add_paragraph("")
+    paragraph.add_run("{{")
+    paragraph.add_run("Hello, World!")
+    paragraph.add_run("}}")
     extend_document = document.ExtendDocument(doc)
 
-    extend_document.replace("Hello", "Goodbye", styles.RunStyle(bold=True))
+    extend_document.replace("{{Hello", "Goodbye", styles.RunStyle(bold=True))
 
-    assert doc.paragraphs[0].text == "Goodbye, world!"
+    assert doc.paragraphs[0].text == "Goodbye, World!}}"
     assert not doc.paragraphs[0].runs[0].bold
     assert doc.paragraphs[0].runs[1].bold
     assert doc.paragraphs[0].runs[1].text == "Goodbye"
