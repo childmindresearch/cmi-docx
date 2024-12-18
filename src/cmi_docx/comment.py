@@ -98,15 +98,15 @@ def add_comment(
     comment_element.set(ns.qn("w:date"), datetime.datetime.now().isoformat())
 
     # Create the text element for the comment
-    comment_paragraph = oxml.OxmlElement("w:p")
-    comment_run = oxml.OxmlElement("w:r")
-    comment_text_element = oxml.OxmlElement("w:t")
-    comment_text_element.text = text
-    comment_run.append(comment_text_element)
-    comment_paragraph.append(comment_run)
-    comment_element.append(comment_paragraph)
-
-    comments_xml.append(comment_element)
+    for para in text.split("\n"):
+        comment_paragraph = oxml.OxmlElement("w:p")
+        comment_run = oxml.OxmlElement("w:r")
+        comment_text_element = oxml.OxmlElement("w:t")
+        comment_text_element.text = para
+        comment_run.append(comment_text_element)
+        comment_paragraph.append(comment_run)
+        comment_element.append(comment_paragraph)
+        comments_xml.append(comment_element)
     comments_part._blob = ElementTree.tostring(comments_xml)
 
     # Create the commentRangeStart and commentRangeEnd elements
