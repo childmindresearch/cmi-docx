@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install poetry
+    - name: Install uv
       run: pipx install uv
     - uses: actions/setup-python@v5
       with:
@@ -26,6 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --resolution=${{ matrix.resolution }}
+      shell: bash
     - name: Run tests
       id: run-tests
       run: >
@@ -36,6 +37,7 @@ jobs:
           --cov=src tests \
           --log-level=DEBUG \
           --verbose
+      shell: bash
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -52,12 +54,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Install poetry
+    - name: Install uv
       run: pipx install uv
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: poetry
+        cache: pip
     - run: |
         uv sync
         uv run mypy .
