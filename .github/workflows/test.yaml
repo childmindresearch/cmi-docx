@@ -8,28 +8,36 @@ on:
 
 jobs:
   unit:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python_version: ['3.10', '3.11', '3.12', '3.13']
+        resolution: [lowest-direct, highest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install poetry
-      run: pipx install poetry
+    - name: Install uv
+      run: pipx install uv
     - uses: actions/setup-python@v5
       with:
-        python-version-file: pyproject.toml
-        cache: poetry
+        python-version: ${{ matrix.python_version }}
+        cache: pip
     - name: Install dependencies
       run: |
-        poetry install
+        uv sync --resolution=${{ matrix.resolution }}
+      shell: bash
     - name: Run tests
       id: run-tests
       run: >
-        poetry run pytest \
+        uv run pytest \
           --junitxml=pytest.xml \
           --cov-report=term-missing:skip-covered \
           --cov-report=xml:coverage.xml \
           --cov=src tests \
           --log-level=DEBUG \
           --verbose
+      shell: bash
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
@@ -46,12 +54,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Install poetry
-      run: pipx install poetry
+    - name: Install uv
+      run: pipx install uv
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: poetry
+        cache: pip
     - run: |
-        poetry install
-        poetry run mypy .
+        uv sync
+        uv run mypy .
