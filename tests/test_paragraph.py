@@ -66,6 +66,19 @@ def test_find_in_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
     assert actual[1].character_indices == expected[1].character_indices
 
 
+def test_find_in_single_run_complete() -> None:
+    """Tests finding an exact match of a run."""
+    document = docx.Document()
+    para = document.add_paragraph("This is a sample paragraph.")
+    para.add_run("full-run")
+    para.add_run("another")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    actual = extend_paragraph.find_in_runs("full-run")
+
+    assert len(actual[0].runs) == 1
+
+
 def test_replace_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
     """Test replacing text in a paragraph."""
     extend_paragraph = paragraph.ExtendParagraph(sample_paragraph)
