@@ -152,3 +152,34 @@ def test_insert_run_empty() -> None:
 
     assert para.text == "Hello"
     assert para.runs[0].bold
+
+
+def test_replace_between_one_run() -> None:
+    """Test replacing text in one run."""
+    document = docx.Document()
+    para = document.add_paragraph("This is a sample paragraph.")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.replace_between(5, 7, "was")
+
+    assert para.text == "This was a sample paragraph."
+    assert para.runs[0].text == "This "
+    assert para.runs[1].text == "was"
+    assert para.runs[2].text == " a sample paragraph."
+
+
+def test_replace_between_multiple_runs() -> None:
+    """Test replacing text in multiple runs."""
+    document = docx.Document()
+    para = document.add_paragraph("This")
+    para.add_run(" is ")
+    para.add_run(" Sparta!")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.replace_between(3, 11, "nk sm")
+
+    assert para.text == "Think smarta!"
+    assert para.runs[0].text == "Thi"
+    assert para.runs[1].text == "nk sm"
+    assert para.runs[2].text == ""  # Remnant of the ' is ' run.
+    assert para.runs[3].text == "arta!"

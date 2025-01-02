@@ -13,7 +13,7 @@ from cmi_docx import run, styles
 
 @dataclasses.dataclass
 class FindParagraph:
-    """Data class for maintaing find results in paragraphs.
+    """Data class for maintaining find results in paragraphs.
 
     Attributes:
         paragraph: The paragraph containing the text.
@@ -71,23 +71,24 @@ class ExtendParagraph:
         run_lengths = [len(run.text) for run in self.paragraph.runs]
         cumulative_run_lengths = list(itertools.accumulate(run_lengths))
 
-        for occurence in self.find_in_paragraph(needle).character_indices:
-            start_run = bisect.bisect_right(cumulative_run_lengths, occurence[0])
+        for occurrence in self.find_in_paragraph(needle).character_indices:
+            start_run = bisect.bisect_right(cumulative_run_lengths, occurrence[0])
             end_run = bisect.bisect_right(
                 cumulative_run_lengths[:-1],
-                occurence[1] - 1,  # -1 as the range does not include the last character
+                occurrence[1]
+                - 1,  # -1 as the range does not include the last character
                 lo=start_run,
             )
 
             start_index = (
-                occurence[0] - cumulative_run_lengths[start_run - 1]
+                occurrence[0] - cumulative_run_lengths[start_run - 1]
                 if start_run > 0
-                else occurence[0]
+                else occurrence[0]
             )
             end_index = (
-                occurence[1] - cumulative_run_lengths[end_run - 1]
+                occurrence[1] - cumulative_run_lengths[end_run - 1]
                 if end_run > 0
-                else occurence[1]
+                else occurrence[1]
             )
 
             run_finds.append(
@@ -116,6 +117,54 @@ class ExtendParagraph:
 
         for run_find in run_finder:
             run_find.replace(replace, style)
+
+    def replace_between(
+        self, start: int, end: int, replace: str, style: styles.RunStyle | None = None
+    ) -> None:
+        """Replace text between indices.
+
+        Args:
+            start: The first index to replace.
+            end: The last index to replace.
+            replace: The text to insert.
+            style: The style to apply to the replacement text. If None, matches
+                the style of the first run in the replacement window.
+        """
+        cumulative_run_lengths = list(
+            itertools.accumulate(
+                (len(run.text) for run in self.paragraph.runs), initial=0
+            )
+        )
+        start_run_index = bisect.bisect_right(cumulative_run_lengths, start) - 1
+        end_run_index = bisect.bisect_right(cumulative_run_lengths, end) - 1
+
+        for index in range(start_run_index + 1, end_run_index):
+            self.paragraph.runs[index].text = ""
+
+        start_run = self.paragraph.runs[start_run_index]
+        end_run = self.paragraph.runs[end_run_index]
+
+        if end_run_index != start_run_index:
+            remainder = (
+                end
+                - cumulative_run_lengths[end_run_index]
+                + cumulative_run_lengths[start_run_index]
+            )
+            end_run.text = end_run.text[remainder:]
+            after_text = None
+        else:
+            after_text = start_run.text[end - cumulative_run_lengths[end_run_index] :]
+
+        start_run.text = start_run.text[
+            : start - cumulative_run_lengths[start_run_index]
+        ]
+        if style is None:
+            style = run.ExtendRun(start_run).get_format()
+        self.insert_run(start_run_index + 1, replace, style)
+        if after_text:
+            self.insert_run(
+                start_run_index + 2, after_text, run.ExtendRun(start_run).get_format()
+            )
 
     def insert_run(self, index: int, text: str, style: styles.RunStyle) -> docx_run.Run:
         """Inserts a run into a paragraph.
