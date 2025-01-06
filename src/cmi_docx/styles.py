@@ -27,8 +27,8 @@ class ParagraphStyle:
     font_size: int | None = None
     font_rgb: tuple[int, int, int] | None = None
     line_spacing: float | None = None
-    space_before: float | None = None
-    space_after: float | None = None
+    space_before: int | None = None
+    space_after: int | None = None
     alignment: text.WD_PARAGRAPH_ALIGNMENT | None = None
 
 
