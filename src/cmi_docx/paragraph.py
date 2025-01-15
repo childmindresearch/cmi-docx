@@ -145,11 +145,7 @@ class ExtendParagraph:
         end_run = self.paragraph.runs[end_run_index]
 
         if end_run_index != start_run_index:
-            remainder = (
-                end
-                - cumulative_run_lengths[end_run_index]
-                + cumulative_run_lengths[start_run_index]
-            )
+            remainder = end - cumulative_run_lengths[end_run_index]
             end_run.text = end_run.text[remainder:]
             after_text = None
         else:
