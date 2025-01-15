@@ -171,12 +171,12 @@ def test_replace_between_one_run() -> None:
 def test_replace_between_multiple_runs() -> None:
     """Test replacing text in multiple runs."""
     document = docx.Document()
-    para = document.add_paragraph("This")
-    para.add_run(" is ")
+    para = document.add_paragraph("This ")
+    para.add_run("is")
     para.add_run(" Sparta!")
     extend_paragraph = paragraph.ExtendParagraph(para)
 
-    extend_paragraph.replace_between(3, 11, "nk sm")
+    extend_paragraph.replace_between(3, 10, "nk sm")
 
     assert para.text == "Think smarta!"
     assert para.runs[0].text == "Thi"
