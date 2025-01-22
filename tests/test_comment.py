@@ -3,6 +3,7 @@
 import docx
 from docx.opc import constants as docx_constants
 
+import cmi_docx
 from cmi_docx import comment
 
 
@@ -13,7 +14,7 @@ def test_add_comment_single() -> None:
     author = "Grievous"
     message = "Ah, General Kenobi."
 
-    comment.add_comment(document, para, author, message)
+    cmi_docx.add_comment(document, para, author, message)
     para_comment = para.part.part_related_by(docx_constants.RELATIONSHIP_TYPE.COMMENTS)
 
     assert author in para_comment.blob.decode()
@@ -29,7 +30,7 @@ def test_add_comment_range() -> None:
     author = "Grievous"
     message = "Ah, General Kenobi."
 
-    comment.add_comment(document, (run_start, run_end), author, message)
+    cmi_docx.add_comment(document, (run_start, run_end), author, message)
     comment_start = run_start.part.part_related_by(
         docx_constants.RELATIONSHIP_TYPE.COMMENTS
     )
@@ -41,3 +42,75 @@ def test_add_comment_range() -> None:
     assert message in comment_start.blob.decode()
     assert author in comment_end.blob.decode()
     assert message in comment_end.blob.decode()
+
+
+def test_comment_preserver_extract_comments() -> None:
+    """Tests getting comments from a paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph("This is a sample paragraph.")
+    author = "Grievous"
+    message = "Ah, General Kenobi."
+    cmi_docx.add_comment(document, para, author, message)
+    preserver = comment.CommentPreserver(para._element)
+
+    comments = preserver.extract_comments()
+
+    assert len(comments) == 1
+    assert comments[0].start_index == 0
+    assert comments[0].end_index == len(para.text)
+
+
+def test_comment_preserver_strip_comments() -> None:
+    """Tests removing comments from a paragraph."""
+    document = docx.Document()
+    para = document.add_paragraph()
+    run = para.add_run("this")
+    para.add_run("is")
+    author = "Grievous"
+    message = "Ah, General Kenobi."
+    cmi_docx.add_comment(document, run, author, message)
+    preserver = comment.CommentPreserver(para._element)
+
+    preserver.strip_comments()
+    comments = preserver.extract_comments()
+
+    assert len(comments) == 0
+    assert para.text == "thisis"
+
+
+def test_replace_between_preserve_comments_contained() -> None:
+    """Using the replace_between with an edit inside the comment."""
+    document = docx.Document()
+    para = document.add_paragraph("This is a sample paragraph.")
+    extend_para = cmi_docx.ExtendParagraph(para)
+    author = "Grievous"
+    message = "Ah, General Kenobi."
+    cmi_docx.add_comment(document, para, author, message)
+
+    extend_para.replace_between(5, 7, "was")
+    comments = comment.CommentPreserver(para._element).extract_comments()
+
+    assert para.text == "This was a sample paragraph."
+    assert len(comments) == 1
+    assert comments[0].start_index == 0
+    assert comments[0].end_index == len(para.text)
+
+
+def test_strip_comments_removes_comments_entire_string() -> None:
+    """Using the replace_between with the edit equivalent to the comment range."""
+    document = docx.Document()
+    para = document.add_paragraph("")
+    run = para.add_run("this")
+    para.add_run("is")
+    extend_para = cmi_docx.ExtendParagraph(para)
+    author = "Grievous"
+    message = "Ah, General Kenobi."
+    cmi_docx.add_comment(document, run, author, message)
+
+    extend_para.replace_between(0, len(run.text), "was")
+    comments = comment.CommentPreserver(para._element).extract_comments()
+
+    assert para.text == "wasis"
+    assert len(comments) == 1
+    assert comments[0].start_index == 0
+    assert comments[0].end_index == len(para.text)
