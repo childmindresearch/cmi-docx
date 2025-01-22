@@ -250,8 +250,8 @@ class CommentPreserver:
             if elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem):
                 self.paragraph.remove(elem)
 
+    @staticmethod
     def adjust_range_positions(
-        self,
         comments: list[CommentRange],
         edit_start: int,
         edit_end: int,
