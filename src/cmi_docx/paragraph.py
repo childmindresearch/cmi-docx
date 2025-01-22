@@ -9,6 +9,7 @@ from docx.text import paragraph as docx_paragraph
 from docx.text import run as docx_run
 
 from cmi_docx import run, styles
+from cmi_docx.comment import CommentPreserver
 
 
 @dataclasses.dataclass
@@ -130,6 +131,10 @@ class ExtendParagraph:
             style: The style to apply to the replacement text. If None, matches
                 the style of the first run in the replacement window.
         """
+        comment_preserver = CommentPreserver(self.paragraph._element)
+        comments = comment_preserver.extract_comments()
+        comment_preserver.strip_comments()
+
         cumulative_run_lengths = list(
             itertools.accumulate(
                 (len(run.text) for run in self.paragraph.runs), initial=0
@@ -161,6 +166,11 @@ class ExtendParagraph:
             self.insert_run(
                 start_run_index + 2, after_text, run.ExtendRun(start_run).get_format()
             )
+
+        adjusted_comments = comment_preserver.adjust_range_positions(
+            comments, start, end, len(replace)
+        )
+        comment_preserver.restore_comments(adjusted_comments)
 
     def insert_run(self, index: int, text: str, style: styles.RunStyle) -> docx_run.Run:
         """Inserts a run into a paragraph.

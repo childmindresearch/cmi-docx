@@ -181,5 +181,4 @@ def test_replace_between_multiple_runs() -> None:
     assert para.text == "Think smarta!"
     assert para.runs[0].text == "Thi"
     assert para.runs[1].text == "nk sm"
-    assert para.runs[2].text == ""  # Remnant of the ' is ' run.
-    assert para.runs[3].text == "arta!"
+    assert para.runs[2].text == "arta!"
