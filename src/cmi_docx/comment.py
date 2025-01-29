@@ -11,6 +11,7 @@ from docx import document, oxml
 from docx.opc import constants as docx_constants
 from docx.opc import packuri, part
 from docx.oxml import ns
+from docx.oxml.text import run as docx_run
 from docx.text import paragraph, run
 from lxml import etree
 
@@ -178,15 +179,12 @@ class CommentPreserver:
         comments = []
         start_elements = {}
 
-        # First pass: collect all comment range starts
         for elem in self.paragraph.iter():
             if elem.tag == f"{{{self.ns['w']}}}commentRangeStart":
                 comment_id = elem.get(f"{{{self.ns['w']}}}id")
                 start_pos = self._get_text_length_before_element(elem)
                 start_elements[comment_id] = start_pos
 
-        # Second pass: match with ends
-        for elem in self.paragraph.iter():
             if elem.tag == f"{{{self.ns['w']}}}commentRangeEnd":
                 comment_id = elem.get(f"{{{self.ns['w']}}}id")
                 if comment_id in start_elements:
@@ -205,11 +203,11 @@ class CommentPreserver:
         """Remove all comment-related elements from the paragraph."""
         to_remove = []
 
-        def should_remove_run(run) -> bool:  # noqa: ANN001 # Run is unspecified internal type of docx-python
+        def should_remove_run(run: docx_run.CT_R) -> bool:
             """Helper to determine if a run should be removed."""
             # Check for nested runs
             if any(child.tag == f"{{{self.ns['w']}}}r" for child in run):
-                return True
+                return False
             # Check if empty
             if len(run) == 0:
                 return True

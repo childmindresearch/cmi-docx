@@ -8,7 +8,7 @@ from cmi_docx import styles
 
 
 class FindRun:
-    """Data class for maintaing find results in runs.
+    """Data class for maintaining find results in runs.
 
     Attributes:
         paragraph: The paragraph containing the text.

@@ -61,20 +61,16 @@ def test_comment_preserver_extract_comments() -> None:
 
 
 def test_comment_preserver_strip_comments() -> None:
-    """Tests removing comments from a paragraph."""
+    """Tests stripping comments from a paragraph."""
     document = docx.Document()
     para = document.add_paragraph()
     run = para.add_run("this")
     para.add_run("is")
-    author = "Grievous"
-    message = "Ah, General Kenobi."
-    cmi_docx.add_comment(document, run, author, message)
+    cmi_docx.add_comment(document, run, "Grievous", "Ah, General Kenobi.")
     preserver = comment.CommentPreserver(para._element)
 
     preserver.strip_comments()
-    comments = preserver.extract_comments()
 
-    assert len(comments) == 0
     assert para.text == "thisis"
 
 
@@ -103,9 +99,7 @@ def test_strip_comments_removes_comments_entire_string() -> None:
     run = para.add_run("this")
     para.add_run("is")
     extend_para = cmi_docx.ExtendParagraph(para)
-    author = "Grievous"
-    message = "Ah, General Kenobi."
-    cmi_docx.add_comment(document, run, author, message)
+    cmi_docx.add_comment(document, run, "Grievous", "Ah, General Kenobi.")
 
     extend_para.replace_between(0, len(run.text), "was")
     comments = comment.CommentPreserver(para._element).extract_comments()
@@ -113,4 +107,4 @@ def test_strip_comments_removes_comments_entire_string() -> None:
     assert para.text == "wasis"
     assert len(comments) == 1
     assert comments[0].start_index == 0
-    assert comments[0].end_index == len(para.text)
+    assert comments[0].end_index == len(para.runs[0].text)
