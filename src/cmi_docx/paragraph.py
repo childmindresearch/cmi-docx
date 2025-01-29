@@ -8,8 +8,7 @@ import re
 from docx.text import paragraph as docx_paragraph
 from docx.text import run as docx_run
 
-from cmi_docx import run, styles
-from cmi_docx.comment import CommentPreserver
+from cmi_docx import comment, run, styles
 
 
 @dataclasses.dataclass
@@ -131,7 +130,7 @@ class ExtendParagraph:
             style: The style to apply to the replacement text. If None, matches
                 the style of the first run in the replacement window.
         """
-        comment_preserver = CommentPreserver(self.paragraph._element)
+        comment_preserver = comment.CommentPreserver(self.paragraph._element)
         comments = comment_preserver.extract_comments()
         comment_preserver.strip_comments()
 

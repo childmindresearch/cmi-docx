@@ -3,8 +3,8 @@
 Code based on sample code in https://github.com/python-openxml/python-docx/issues/93.
 """
 
+import dataclasses
 import datetime
-from dataclasses import dataclass
 from xml.etree import ElementTree
 
 from docx import document, oxml
@@ -140,7 +140,7 @@ def add_comment(
     elements[0].append(comment_reference)
 
 
-@dataclass
+@dataclasses.dataclass
 class CommentRange:
     """All data representing a comment range.
 
