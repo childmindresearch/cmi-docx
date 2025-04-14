@@ -1,6 +1,7 @@
 """Style interfaces for document properties."""
 
 import dataclasses
+from typing import Literal
 
 from docx.enum import text
 
@@ -33,10 +34,27 @@ class ParagraphStyle:
 
 
 @dataclasses.dataclass
-class TableStyle:
+class CellBorder:
+    """Dataclass for cell border style arguments.
+
+    Attributes:
+        sides: Tuple of sides for this to apply to, must be "top", "bottom", "insideH",
+            "insideV", "start", or "end".
+        sz: Size of the border, 1pt = 8/
+        val: Whether to use a single or dashed line. None makes the line invisible.
+        color: The color of the border as a hex code.
+    """
+
+    sides: tuple[str, ...]
+    sz: int | None = None
+    val: Literal["single", "dashed"] | None = "single"
+    color: str | None = None
+
+
+@dataclasses.dataclass
+class CellStyle:
     """Dataclass for table style arguments."""
 
     paragraph: ParagraphStyle | None = None
-    space_before: float | None = None
-    space_after: float | None = None
     background_rgb: tuple[int, int, int] | None = None
+    borders: list[CellBorder] | None = None
