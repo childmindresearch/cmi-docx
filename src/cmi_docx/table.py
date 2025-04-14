@@ -17,7 +17,7 @@ class ExtendCell:
         """
         self.cell = cell
 
-    def format(self, style: styles.TableStyle) -> None:
+    def format(self, style: styles.CellStyle) -> None:
         """Formats a cell in a Word table.
 
         Args:
@@ -38,6 +38,35 @@ class ExtendCell:
                 ),
             )
             self.cell._tc.get_or_add_tcPr().append(shading)  # noqa: SLF001
+
+        if style.borders:
+            for border in style.borders:
+                self._apply_border(border)
+
+    def _apply_border(self, border: styles.CellBorder) -> None:
+        """Applies the borders styling to the cell.
+
+        Args:
+            border: The style to apply to the cell.
+        """
+        tc_pr = self.cell._tc.get_or_add_tcPr()
+
+        tc_borders = tc_pr.first_child_found_in("w:tcBorders")
+        if tc_borders is None:
+            tc_borders = oxml.OxmlElement("w:tcBorders")
+            tc_pr.append(tc_borders)
+
+        for edge in border.sides:
+            tag = "w:{}".format(edge)
+            element = tc_borders.find(ns.qn(tag))
+            if element is None:
+                element = oxml.OxmlElement(tag)
+                tc_borders.append(element)
+
+            # looks like order of attributes is important
+            for key in ["sz", "val", "color"]:
+                if value := getattr(border, key):
+                    element.set(ns.qn("w:{}".format(key)), str(value))
 
 
 def rgb_to_hex(r: int, g: int, b: int) -> str:
