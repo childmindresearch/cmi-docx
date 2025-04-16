@@ -9,5 +9,7 @@ from cmi_docx.styles import (  # noqa: F401
     CellStyle,
     ParagraphStyle,
     RunStyle,
+    TableSections,
+    TableStyle,
 )
-from cmi_docx.table import ExtendCell  # noqa: F401
+from cmi_docx.table import ExtendCell, ExtendTable  # noqa: F401
