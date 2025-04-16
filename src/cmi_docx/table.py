@@ -6,6 +6,44 @@ from docx.oxml import ns
 from cmi_docx import paragraph, styles
 
 
+class ExtendTable:
+    """Extends a python-docx Table with additional functionality."""
+
+    def __init__(self, tbl: table.Table) -> None:
+        """Initialize the ExtendTable object.
+
+        Args:
+            tbl: The table to extend.
+        """
+        self.table = tbl
+
+    def format(self, style: styles.TableStyle) -> None:
+        """Formats a table in a Word document.
+
+        Args:
+            style: The style to use.
+        """
+        if style.sections:
+            section_names = [
+                "firstColumn",
+                "firstRow",
+                "lastColumn",
+                "lastRow",
+                "noHBand",
+                "noVBand",
+            ]
+            for name in section_names:
+                value = getattr(style.sections, name)
+                if value is None:
+                    continue
+
+                tbl_pr = self.table._tblPr
+                tbl_look = tbl_pr.first_child_found_in("w:tblLook")
+                if tbl_look is None:
+                    raise ValueError("Table look was not found.")
+                tbl_look.set(ns.qn(f"w:{name}"), str(int(value)))
+
+
 class ExtendCell:
     """Extends a python-docx Word cell with additional functionality."""
 
