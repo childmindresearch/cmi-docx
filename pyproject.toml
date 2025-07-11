@@ -1,6 +1,6 @@
 [project]
 name = "cmi-docx"
-version = "0.4.1"
+version = "0.4.2"
 description = "Additional tooling for Python-docx."
 readme = "README.md"
 requires-python = ">=3.10"

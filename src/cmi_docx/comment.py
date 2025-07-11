@@ -325,10 +325,7 @@ class CommentPreserver:
 
             # Clean up any empty runs before adding the comment reference
             for elem in list(self.paragraph):
-                if elem.tag == f"{{{self.ns['w']}}}r" and (
-                    len(elem) == 0
-                    or not any(child.tag == f"{{{self.ns['w']}}}t" for child in elem)
-                ):
+                if elem.tag == f"{{{self.ns['w']}}}r" and len(elem) == 0:
                     self.paragraph.remove(elem)
 
             # Always append reference at the end of paragraph

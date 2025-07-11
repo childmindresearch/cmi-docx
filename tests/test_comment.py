@@ -108,3 +108,26 @@ def test_strip_comments_removes_comments_entire_string() -> None:
     assert len(comments) == 1
     assert comments[0].start_index == 0
     assert comments[0].end_index == len(para.runs[0].text)
+
+
+def test_restore_comments_preserves_comment_references() -> None:
+    """Tests that restoring comments doesn't remove comment reference runs."""
+    document = docx.Document()
+    para = document.add_paragraph("Sample text with comment.")
+    author = "Obi-Wan"
+    message = "Hello there!"
+
+    cmi_docx.add_comment(document, para, author, message)
+    cmi_docx.add_comment(document, para, author, message)
+
+    original_xml = para._element
+    comment_refs_before = len(original_xml.xpath(".//w:commentReference"))
+
+    preserver = comment.CommentPreserver(para._element)
+    extracted_comments = preserver.extract_comments()
+    preserver.restore_comments(extracted_comments)
+    comment_refs_after = len(para._element.xpath(".//w:commentReference"))
+
+    assert comment_refs_before > 0
+    assert comment_refs_after == comment_refs_before
+    assert para.text == "Sample text with comment."
