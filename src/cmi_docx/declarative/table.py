@@ -1,13 +1,15 @@
 """Table components for declarative documents."""
 
-import dataclasses
-from typing import Any
+from __future__ import annotations
 
-from cmi_docx.declarative.base import Component
+import dataclasses
+from collections.abc import Coroutine, Iterable
+
+from cmi_docx import declarative
 
 
 @dataclasses.dataclass
-class TableCell(Component):
+class TableCell(declarative.Component):
     """A table cell containing paragraphs or nested tables.
 
     Attributes:
@@ -20,16 +22,23 @@ class TableCell(Component):
         margins: Cell margins (dict with 'top', 'bottom', 'left', 'right').
     """
 
-    children: list[Any] | None = None
-    width: dict[str, Any] | None = None
-    borders: dict[str, Any] | None = None
-    shading: dict[str, Any] | None = None
+    children: (
+        Iterable[
+            declarative.Paragraph
+            | Table
+            | Coroutine[None, None, declarative.Paragraph | Table]
+        ]
+        | None
+    ) = None
+    width: dict[str, int | str] | None = None
+    borders: dict[str, dict[str, str | int]] | None = None
+    shading: dict[str, str] | None = None
     vertical_align: str | None = None
     margins: dict[str, int] | None = None
 
 
 @dataclasses.dataclass
-class TableRow(Component):
+class TableRow(declarative.Component):
     """A table row containing cells.
 
     Attributes:
@@ -39,14 +48,14 @@ class TableRow(Component):
         header: Mark row as header row.
     """
 
-    children: list[Any]
-    height: dict[str, Any] | None = None
+    children: list[TableCell | Coroutine[None, None, TableCell]]
+    height: dict[str, int | str] | None = None
     cant_split: bool | None = None
     header: bool | None = None
 
 
 @dataclasses.dataclass
-class Table(Component):
+class Table(declarative.Component):
     """A table with rows and cells.
 
     Attributes:
@@ -60,10 +69,10 @@ class Table(Component):
         style: Table style name.
     """
 
-    rows: list[Any]
+    rows: list[TableRow | Coroutine[None, None, TableRow]]
     column_widths: list[int] | None = None
-    width: dict[str, Any] | None = None
-    borders: dict[str, Any] | None = None
+    width: dict[str, int | str] | None = None
+    borders: dict[str, dict[str, str | int]] | None = None
     alignment: str | None = None
     indent: int | None = None
     layout: str | None = None

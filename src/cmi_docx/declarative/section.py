@@ -1,9 +1,18 @@
 """Section, header, and footer components for declarative documents."""
 
 import dataclasses
-from typing import Any
+from typing import TYPE_CHECKING, Literal
 
-from cmi_docx.declarative.base import Component
+from cmi_docx import declarative
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
+    from cmi_docx.declarative.paragraph import Paragraph
+    from cmi_docx.declarative.table import Table
+
+type BlockElement = declarative.Paragraph | declarative.Table
+type HeaderFooterType = Literal["default", "first", "even"]
 
 
 @dataclasses.dataclass
@@ -11,11 +20,10 @@ class SectionProperties:
     """Configuration for a document section.
 
     Attributes:
-        page_size: Page dimensions (dict with 'width' and 'height' in twips).
-        page_margins: Page margins (dict with 'top', 'bottom', 'left', 'right',
-            'header', 'footer', 'gutter' in twips).
+        page_size: Page dimensions.
+        page_margins: Page margins.
         page_orientation: 'portrait' or 'landscape'.
-        page_numbering: Page numbering configuration (dict with 'start', 'format').
+        page_numbering: Page numbering configuration.
         columns: Column configuration (dict with 'count', 'space', 'separator').
         vertical_align: Vertical alignment ('top', 'center', 'bottom', 'both').
         title_page: Use different header/footer on first page.
@@ -23,18 +31,22 @@ class SectionProperties:
             'evenPage', 'oddPage').
     """
 
-    page_size: dict[str, int] | None = None
-    page_margins: dict[str, int] | None = None
-    page_orientation: str | None = None
-    page_numbering: dict[str, Any] | None = None
-    columns: dict[str, Any] | None = None
-    vertical_align: str | None = None
+    page_size: dict[Literal["width", "height"], int] | None = None
+    page_margins: (
+        dict[Literal["top", "bottom", "left", "right", "footer", "gutter"], int] | None
+    ) = None
+    page_orientation: Literal["portrait", "landscape"] | None = None
+    page_numbering: dict[Literal["start", "format"], int | str] | None = None
+    columns: dict[Literal["count", "space", "separator"], int | bool] | None = None
+    vertical_align: Literal["top", "center", "bottom", "both"] | None = None
     title_page: bool | None = None
-    type: str | None = None
+    type: (
+        Literal["nextPage", "nextColumn", "continuous", "evenPage", "oddPage"] | None
+    ) = None
 
 
 @dataclasses.dataclass
-class Header(Component):
+class Header(declarative.Component):
     """A section header.
 
     Attributes:
@@ -42,11 +54,13 @@ class Header(Component):
             resolve to these types.
     """
 
-    children: list[Any] | None = None
+    children: (
+        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+    ) = None
 
 
 @dataclasses.dataclass
-class Footer(Component):
+class Footer(declarative.Component):
     """A section footer.
 
     Attributes:
@@ -54,11 +68,13 @@ class Footer(Component):
             resolve to these types.
     """
 
-    children: list[Any] | None = None
+    children: (
+        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+    ) = None
 
 
 @dataclasses.dataclass
-class Section(Component):
+class Section(declarative.Component):
     """A document section with optional headers and footers.
 
     Attributes:
@@ -71,7 +87,9 @@ class Section(Component):
             to Footer components.
     """
 
-    children: list[Any] | None = None
+    children: (
+        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+    ) = None
     properties: SectionProperties | None = None
-    headers: dict[str, Any] | None = None
-    footers: dict[str, Any] | None = None
+    headers: dict[HeaderFooterType, Header] | None = None
+    footers: dict[HeaderFooterType, Footer] | None = None

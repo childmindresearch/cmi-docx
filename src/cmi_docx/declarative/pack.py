@@ -1,21 +1,25 @@
 """Packing logic to convert declarative components to python-docx objects."""
 
+import io
 import pathlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import docx
+from docx import document
 from docx.enum import text as docx_text
 from docx.enum.section import WD_ORIENTATION
 from docx.shared import Pt, RGBColor
 
+from cmi_docx import declarative
+
 if TYPE_CHECKING:
     from cmi_docx.declarative.image import ImageRun
     from cmi_docx.declarative.paragraph import Paragraph, TextRun
-    from cmi_docx.declarative.section import Footer, Header
+    from cmi_docx.declarative.section import Footer, Header, Section
     from cmi_docx.declarative.table import Table, TableCell, TableRow
 
 
-def pack(doc: Any) -> Any:
+def pack(doc: declarative.Document) -> document.Document:
     """Convert a declarative Document into a python-docx Document.
 
     Args:
@@ -45,7 +49,7 @@ def pack(doc: Any) -> Any:
     return docx_doc
 
 
-def _pack_section(docx_doc: Any, section: Any) -> None:
+def _pack_section(docx_doc: "DocxDocument", section: "Section") -> None:
     """Pack a Section into a python-docx document.
 
     Args:
@@ -67,20 +71,18 @@ def _pack_section(docx_doc: Any, section: Any) -> None:
                 docx_section.page_height = props.page_size["height"]
 
         if props.page_margins:
-            if "top" in props.page_margins:
-                docx_section.top_margin = props.page_margins["top"]
-            if "bottom" in props.page_margins:
-                docx_section.bottom_margin = props.page_margins["bottom"]
-            if "left" in props.page_margins:
-                docx_section.left_margin = props.page_margins["left"]
-            if "right" in props.page_margins:
-                docx_section.right_margin = props.page_margins["right"]
-            if "header" in props.page_margins:
-                docx_section.header_distance = props.page_margins["header"]
-            if "footer" in props.page_margins:
-                docx_section.footer_distance = props.page_margins["footer"]
-            if "gutter" in props.page_margins:
-                docx_section.gutter = props.page_margins["gutter"]
+            margin_mapping = {
+                "top": "top_margin",
+                "bottom": "bottom_margin",
+                "left": "left_margin",
+                "right": "right_margin",
+                "header": "header_distance",
+                "footer": "footer_distance",
+                "gutter": "gutter",
+            }
+            for src_key, target_attr in margin_mapping.items():
+                if src_key in props.page_margins:
+                    setattr(docx_section, target_attr, props.page_margins[src_key])
 
         if props.page_orientation:
             if props.page_orientation.lower() == "landscape":
@@ -97,7 +99,30 @@ def _pack_section(docx_doc: Any, section: Any) -> None:
             _pack_footer(docx_section, footer_type, footer)
 
 
-def _pack_header(docx_section: Any, header_type: str, header: "Header") -> None:
+def _get_header_or_footer(docx_section: "DocxSection", hf_type: str, is_header: bool):
+    """Get the appropriate header or footer from a section.
+
+    Args:
+        docx_section: The python-docx Section.
+        hf_type: The type ('default', 'first', 'even').
+        is_header: True for header, False for footer.
+
+    Returns:
+        The header or footer object, or None if type is invalid.
+    """
+    type_mapping = {
+        "default": "header" if is_header else "footer",
+        "first": "first_page_header" if is_header else "first_page_footer",
+        "even": "even_page_header" if is_header else "even_page_footer",
+    }
+
+    attr_name = type_mapping.get(hf_type)
+    return getattr(docx_section, attr_name, None) if attr_name else None
+
+
+def _pack_header(
+    docx_section: "DocxSection", header_type: str, header: "Header"
+) -> None:
     """Pack a Header into a python-docx section.
 
     Args:
@@ -105,21 +130,15 @@ def _pack_header(docx_section: Any, header_type: str, header: "Header") -> None:
         header_type: The header type ('default', 'first', 'even').
         header: The declarative Header.
     """
-    if header_type == "default":
-        docx_header = docx_section.header
-    elif header_type == "first":
-        docx_header = docx_section.first_page_header
-    elif header_type == "even":
-        docx_header = docx_section.even_page_header
-    else:
-        return
-
-    if header.children:
+    docx_header = _get_header_or_footer(docx_section, header_type, is_header=True)
+    if docx_header and header.children:
         for child in header.children:
             _pack_block_element(docx_header, child)
 
 
-def _pack_footer(docx_section: Any, footer_type: str, footer: "Footer") -> None:
+def _pack_footer(
+    docx_section: "DocxSection", footer_type: str, footer: "Footer"
+) -> None:
     """Pack a Footer into a python-docx section.
 
     Args:
@@ -127,21 +146,13 @@ def _pack_footer(docx_section: Any, footer_type: str, footer: "Footer") -> None:
         footer_type: The footer type ('default', 'first', 'even').
         footer: The declarative Footer.
     """
-    if footer_type == "default":
-        docx_footer = docx_section.footer
-    elif footer_type == "first":
-        docx_footer = docx_section.first_page_footer
-    elif footer_type == "even":
-        docx_footer = docx_section.even_page_footer
-    else:
-        return
-
-    if footer.children:
+    docx_footer = _get_header_or_footer(docx_section, footer_type, is_header=False)
+    if docx_footer and footer.children:
         for child in footer.children:
             _pack_block_element(docx_footer, child)
 
 
-def _pack_block_element(container: Any, element: Any) -> None:
+def _pack_block_element(container, element: "Paragraph | Table") -> None:
     """Pack a block-level element (Paragraph or Table).
 
     Args:
@@ -157,7 +168,7 @@ def _pack_block_element(container: Any, element: Any) -> None:
         _pack_table(container, element)
 
 
-def _pack_paragraph(container: Any, para: "Paragraph") -> None:
+def _pack_paragraph(container, para: "Paragraph") -> None:
     """Pack a Paragraph into a container.
 
     Args:
@@ -187,28 +198,27 @@ def _pack_paragraph(container: Any, para: "Paragraph") -> None:
     if para.alignment:
         docx_para.alignment = para.alignment
 
+    fmt = docx_para.paragraph_format
     if para.spacing_before:
-        docx_para.paragraph_format.space_before = Pt(para.spacing_before)
+        fmt.space_before = Pt(para.spacing_before)
     if para.spacing_after:
-        docx_para.paragraph_format.space_after = Pt(para.spacing_after)
+        fmt.space_after = Pt(para.spacing_after)
     if para.line_spacing:
-        docx_para.paragraph_format.line_spacing = para.line_spacing
-
+        fmt.line_spacing = para.line_spacing
     if para.left_indent:
-        docx_para.paragraph_format.left_indent = Pt(para.left_indent)
+        fmt.left_indent = Pt(para.left_indent)
     if para.right_indent:
-        docx_para.paragraph_format.right_indent = Pt(para.right_indent)
+        fmt.right_indent = Pt(para.right_indent)
     if para.first_line_indent:
-        docx_para.paragraph_format.first_line_indent = Pt(para.first_line_indent)
-
+        fmt.first_line_indent = Pt(para.first_line_indent)
     if para.keep_together is not None:
-        docx_para.paragraph_format.keep_together = para.keep_together
+        fmt.keep_together = para.keep_together
     if para.keep_with_next is not None:
-        docx_para.paragraph_format.keep_with_next = para.keep_with_next
+        fmt.keep_with_next = para.keep_with_next
     if para.page_break_before is not None:
-        docx_para.paragraph_format.page_break_before = para.page_break_before
+        fmt.page_break_before = para.page_break_before
     if para.widow_control is not None:
-        docx_para.paragraph_format.widow_control = para.widow_control
+        fmt.widow_control = para.widow_control
 
     if para.text:
         docx_para.add_run(para.text)
@@ -217,7 +227,7 @@ def _pack_paragraph(container: Any, para: "Paragraph") -> None:
             _pack_inline_element(docx_para, child)
 
 
-def _pack_inline_element(docx_para: Any, element: Any) -> None:
+def _pack_inline_element(docx_para: "DocxParagraph", element) -> None:
     """Pack an inline element (TextRun, ImageRun, Tab, Break).
 
     Args:
@@ -234,15 +244,18 @@ def _pack_inline_element(docx_para: Any, element: Any) -> None:
     elif isinstance(element, Tab):
         docx_para.add_run().add_tab()
     elif isinstance(element, Break):
-        if element.type == "page":
-            docx_para.add_run().add_break(docx_text.WD_BREAK.PAGE)
-        elif element.type == "column":
-            docx_para.add_run().add_break(docx_text.WD_BREAK.COLUMN)
+        break_type_mapping = {
+            "page": docx_text.WD_BREAK.PAGE,
+            "column": docx_text.WD_BREAK.COLUMN,
+        }
+        break_type = break_type_mapping.get(element.type)
+        if break_type:
+            docx_para.add_run().add_break(break_type)
         else:
             docx_para.add_run().add_break()
 
 
-def _pack_text_run(docx_para: Any, run: "TextRun") -> None:
+def _pack_text_run(docx_para: "DocxParagraph", run: "TextRun") -> None:
     """Pack a TextRun into a paragraph.
 
     Args:
@@ -258,28 +271,28 @@ def _pack_text_run(docx_para: Any, run: "TextRun") -> None:
     if run.underline is not None:
         docx_run.underline = run.underline
 
+    font = docx_run.font
     if run.font:
-        docx_run.font.name = run.font
+        font.name = run.font
     if run.size:
-        docx_run.font.size = Pt(run.size)
+        font.size = Pt(run.size)
     if run.color:
-        docx_run.font.color.rgb = RGBColor(*run.color)
-
+        font.color.rgb = RGBColor(*run.color)
     if run.superscript:
-        docx_run.font.superscript = True
+        font.superscript = True
     if run.subscript:
-        docx_run.font.subscript = True
+        font.subscript = True
     if run.strike:
-        docx_run.font.strike = True
+        font.strike = True
     if run.all_caps:
-        docx_run.font.all_caps = True
+        font.all_caps = True
     if run.small_caps:
-        docx_run.font.small_caps = True
+        font.small_caps = True
     if run.highlight:
-        docx_run.font.highlight_color = run.highlight
+        font.highlight_color = run.highlight
 
 
-def _pack_image_run(docx_para: Any, image: "ImageRun") -> None:
+def _pack_image_run(docx_para: "DocxParagraph", image: "ImageRun") -> None:
     """Pack an ImageRun into a paragraph.
 
     Args:
@@ -297,14 +310,12 @@ def _pack_image_run(docx_para: Any, image: "ImageRun") -> None:
             height = Pt(image.transformation["height"])
 
     if isinstance(image.data, bytes):
-        import io
-
         docx_run.add_picture(io.BytesIO(image.data), width=width, height=height)
     elif isinstance(image.data, (str, pathlib.Path)):
         docx_run.add_picture(str(image.data), width=width, height=height)
 
 
-def _pack_table(container: Any, table: "Table") -> None:
+def _pack_table(container, table: "Table") -> None:
     """Pack a Table into a container.
 
     Args:
@@ -323,7 +334,7 @@ def _pack_table(container: Any, table: "Table") -> None:
         _pack_table_row(docx_table.rows[row_idx], row)
 
 
-def _pack_table_row(docx_row: Any, row: "TableRow") -> None:
+def _pack_table_row(docx_row: "DocxRow", row: "TableRow") -> None:
     """Pack a TableRow.
 
     Args:
@@ -340,7 +351,7 @@ def _pack_table_row(docx_row: Any, row: "TableRow") -> None:
         _pack_table_cell(docx_row.cells[cell_idx], cell)
 
 
-def _pack_table_cell(docx_cell: Any, cell: "TableCell") -> None:
+def _pack_table_cell(docx_cell: "DocxCell", cell: "TableCell") -> None:
     """Pack a TableCell.
 
     Args:

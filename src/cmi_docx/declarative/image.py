@@ -3,7 +3,6 @@
 import dataclasses
 import pathlib
 from collections.abc import Coroutine
-from typing import Any
 
 from cmi_docx.declarative.base import Component
 
@@ -25,8 +24,8 @@ class ImageRun(Component):
             'verticalPosition', 'zIndex', etc.).
     """
 
-    data: bytes | str | pathlib.Path | Coroutine[Any, Any, bytes]
+    data: bytes | str | pathlib.Path | Coroutine[None, None, bytes]
     type: str | None = None
-    transformation: dict[str, Any] | None = None
+    transformation: dict[str, int | float | dict[str, bool]] | None = None
     alt_text: dict[str, str] | None = None
-    floating: dict[str, Any] | None = None
+    floating: dict[str, str | int | float] | None = None

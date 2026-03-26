@@ -1,15 +1,17 @@
 """Paragraph and text run components for declarative documents."""
 
 import dataclasses
-from typing import Any
+from collections.abc import Awaitable, Coroutine
 
 from docx.enum import text as docx_text
 
-from cmi_docx.declarative.base import Component
+from cmi_docx import declarative
+
+InlineElement = "TextRun | declarative.ImageRun | Tab | Break"
 
 
 @dataclasses.dataclass
-class TextRun(Component):
+class TextRun(declarative.Component):
     """A run of text with formatting.
 
     Attributes:
@@ -28,7 +30,7 @@ class TextRun(Component):
         highlight: Highlight color name.
     """
 
-    text: str
+    text: Awaitable[str] | str
     bold: bool | None = None
     italic: bool | None = None
     underline: bool | None = None
@@ -44,12 +46,12 @@ class TextRun(Component):
 
 
 @dataclasses.dataclass
-class Tab(Component):
+class Tab(declarative.Component):
     """A tab character."""
 
 
 @dataclasses.dataclass
-class Break(Component):
+class Break(declarative.Component):
     """A line or page break.
 
     Attributes:
@@ -60,14 +62,14 @@ class Break(Component):
 
 
 @dataclasses.dataclass
-class Paragraph(Component):
+class Paragraph(declarative.Component):
     """A paragraph with optional formatting and child runs.
 
     Attributes:
         text: Shorthand for a paragraph with a single text run.
-        children: List of TextRun, ImageRun, Tab, Break, or coroutines
+        children: List of TextRun, declarative.ImageRun, Tab, Break, or coroutines
             that resolve to these types.
-        heading: Heading level (1-9).
+        heading: Heading level.
         style: Style name to apply.
         alignment: Paragraph alignment.
         spacing_before: Space before paragraph in points.
@@ -82,8 +84,17 @@ class Paragraph(Component):
         widow_control: Enable widow/orphan control.
     """
 
-    text: str | None = None
-    children: list[Any] | None = None
+    text: Awaitable[str] | str | None = None
+    children: (
+        list[
+            TextRun
+            | declarative.ImageRun
+            | Tab
+            | Break
+            | Coroutine[None, None, TextRun | declarative.ImageRun | Tab | Break]
+        ]
+        | None
+    ) = None
     heading: int | None = None
     style: str | None = None
     alignment: docx_text.WD_PARAGRAPH_ALIGNMENT | None = None

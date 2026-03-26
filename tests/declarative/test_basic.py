@@ -5,7 +5,6 @@ import io
 from cmi_docx.declarative import (
     Break,
     Document,
-    ImageRun,
     Paragraph,
     Section,
     Tab,

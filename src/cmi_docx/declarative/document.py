@@ -3,9 +3,15 @@
 import dataclasses
 import io
 import pathlib
-from typing import Any
+from typing import TYPE_CHECKING
 
+from cmi_docx.declarative import pack
 from cmi_docx.declarative.base import Component
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
+    from cmi_docx.declarative.section import Section
 
 
 @dataclasses.dataclass
@@ -47,7 +53,7 @@ class Document(Component):
         ...     doc.save("output.docx")
     """
 
-    sections: list[Any]
+    sections: list["Section | Coroutine[None, None, Section]"]
     creator: str | None = None
     title: str | None = None
     subject: str | None = None
@@ -55,8 +61,8 @@ class Document(Component):
     keywords: str | None = None
     category: str | None = None
     comments: str | None = None
-    styles: dict[str, Any] | None = None
-    numbering: dict[str, Any] | None = None
+    styles: dict[str, str | int | bool] | None = None
+    numbering: dict[str, str | int | list[dict[str, str | int]]] | None = None
 
     def save(self, path_or_stream: str | pathlib.Path | io.BytesIO) -> None:
         """Save the document to a file or stream.
@@ -67,19 +73,17 @@ class Document(Component):
         Raises:
             RuntimeError: If document contains unresolved async children.
         """
-        if not self._is_resolved():
+        if not self.is_resolved():
             msg = (
                 "Cannot save document with unresolved async children. "
                 "Use 'await Document(...)' to resolve all async children first."
             )
             raise RuntimeError(msg)
 
-        from cmi_docx.declarative.pack import pack
-
-        docx_doc = pack(self)
+        docx_doc = pack.pack(self)
         docx_doc.save(path_or_stream)
 
-    def to_docx(self) -> Any:
+    def to_docx(self) -> document.Document:
         """Convert to a python-docx Document for interop with Extend* API.
 
         Returns:
@@ -88,13 +92,11 @@ class Document(Component):
         Raises:
             RuntimeError: If document contains unresolved async children.
         """
-        if not self._is_resolved():
+        if not self.is_resolved():
             msg = (
                 "Cannot convert document with unresolved async children. "
                 "Use 'await Document(...)' to resolve all async children first."
             )
             raise RuntimeError(msg)
 
-        from cmi_docx.declarative.pack import pack
-
-        return pack(self)
+        return pack.pack(self)
