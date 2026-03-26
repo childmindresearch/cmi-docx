@@ -2,7 +2,7 @@
 
 import asyncio
 import dataclasses
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Generator
 from typing import Any, Self
 
 
@@ -30,46 +30,24 @@ def _collect_resolve_tasks(component: "Component") -> list[_ResolveTask]:
 
         if isinstance(value, Component):
             tasks.append(_ResolveTask(field.name, None, value.resolve()))
-        elif asyncio.iscoroutine(value):
+        elif asyncio.iscoroutine(value) or asyncio.isfuture(value):
             tasks.append(_ResolveTask(field.name, None, value))
-        elif isinstance(value, list):
+        elif isinstance(value, (list, tuple, Generator)):
             for idx, item in enumerate(value):
                 if isinstance(item, Component):
                     tasks.append(_ResolveTask(field.name, idx, item.resolve()))
-                elif asyncio.iscoroutine(item):
+                elif asyncio.iscoroutine(item) or asyncio.isfuture(item):
                     tasks.append(_ResolveTask(field.name, idx, item))
-
     return tasks
-
-
-def _is_value_resolved(value: Any) -> bool:
-    """Check if a single value is fully resolved.
-
-    Args:
-        value: The value to check.
-
-    Returns:
-        True if the value is resolved, False if it's an unresolved Component or coroutine.
-    """
-    if isinstance(value, Component):
-        return value.is_resolved()
-    if asyncio.iscoroutine(value):
-        return False
-    return True
 
 
 @dataclasses.dataclass
 class Component:
     """Base class for all declarative document components.
 
-    Supports both synchronous and asynchronous usage. When any child
-    is a coroutine, the component must be awaited to resolve all
-    async children concurrently before saving.
+    All components are async. Use `await Document(...)` to resolve all
+    async children concurrently.
     """
-
-    def __await__(self):
-        """Make this component awaitable to resolve all async children."""
-        return self.resolve().__await__()
 
     async def resolve(self) -> Self:
         """Recursively resolve all async children concurrently.
@@ -88,23 +66,3 @@ class Component:
                     getattr(self, task.field_name)[task.idx] = result
 
         return self
-
-    def is_resolved(self) -> bool:
-        """Check if all children are fully resolved (no pending coroutines).
-
-        Returns:
-            True if all children are resolved, False otherwise.
-        """
-        for field in dataclasses.fields(self):
-            value = getattr(self, field.name)
-
-            if value is None:
-                continue
-
-            if isinstance(value, list):
-                if not all(_is_value_resolved(item) for item in value):
-                    return False
-            elif not _is_value_resolved(value):
-                return False
-
-        return True

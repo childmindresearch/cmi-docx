@@ -1,17 +1,24 @@
 """Paragraph and text run components for declarative documents."""
 
+from __future__ import annotations
+
 import dataclasses
-from collections.abc import Awaitable, Coroutine
+from typing import TYPE_CHECKING
 
 from docx.enum import text as docx_text
 
-import cmi_docx
+from cmi_docx.declarative import base
 
-InlineElement = "TextRun | declarative.ImageRun | Tab | Break"
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Coroutine
+
+    from cmi_docx.declarative import image
+
+InlineElement = "TextRun | image.ImageRun | Tab | Break"
 
 
 @dataclasses.dataclass
-class TextRun(cmi_docx.declarative.Component):
+class TextRun(base.Component):
     """A run of text with formatting.
 
     Attributes:
@@ -31,6 +38,7 @@ class TextRun(cmi_docx.declarative.Component):
     """
 
     text: Awaitable[str] | str
+    comment_text: Awaitable[str] | str | None = None
     bold: bool | None = None
     italic: bool | None = None
     underline: bool | None = None
@@ -46,12 +54,12 @@ class TextRun(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class Tab(cmi_docx.declarative.Component):
+class Tab(base.Component):
     """A tab character."""
 
 
 @dataclasses.dataclass
-class Break(cmi_docx.declarative.Component):
+class Break(base.Component):
     """A line or page break.
 
     Attributes:
@@ -62,12 +70,12 @@ class Break(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class Paragraph(cmi_docx.declarative.Component):
+class Paragraph(base.Component):
     """A paragraph with optional formatting and child runs.
 
     Attributes:
         text: Shorthand for a paragraph with a single text run.
-        children: List of TextRun, declarative.ImageRun, Tab, Break, or coroutines
+        children: List of TextRun, ImageRun, Tab, Break, or coroutines
             that resolve to these types.
         heading: Heading level.
         style: Style name to apply.
@@ -85,15 +93,14 @@ class Paragraph(cmi_docx.declarative.Component):
     """
 
     text: Awaitable[str] | str | None = None
+    comment_text: Awaitable[str] | str | None = None
     children: (
         list[
             TextRun
-            | cmi_docx.declarative.ImageRun
+            | image.ImageRun
             | Tab
             | Break
-            | Coroutine[
-                None, None, TextRun | cmi_docx.declarative.ImageRun | Tab | Break
-            ]
+            | Coroutine[None, None, TextRun | image.ImageRun | Tab | Break]
         ]
         | None
     ) = None

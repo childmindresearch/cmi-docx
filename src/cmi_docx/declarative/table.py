@@ -5,14 +5,16 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
-import cmi_docx
+from cmi_docx.declarative import base
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine, Iterable
 
+    import cmi_docx.declarative
+
 
 @dataclasses.dataclass
-class TableCell(cmi_docx.declarative.Component):
+class TableCell(base.Component):
     """A table cell containing paragraphs or nested tables.
 
     Attributes:
@@ -41,7 +43,7 @@ class TableCell(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class TableRow(cmi_docx.declarative.Component):
+class TableRow(base.Component):
     """A table row containing cells.
 
     Attributes:
@@ -58,7 +60,7 @@ class TableRow(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class Table(cmi_docx.declarative.Component):
+class Table(base.Component):
     """A table with rows and cells.
 
     Attributes:

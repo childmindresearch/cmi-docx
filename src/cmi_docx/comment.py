@@ -80,7 +80,7 @@ def add_comment(
         msg = "Location must be a single element or a tuple of two."
         raise ValueError(msg)
     else:
-        elements = (location[0]._element, location[1]._element)  # noqa: SLF001  # ty:ignore[unresolved-attribute]
+        elements = (location[0]._element, location[1]._element)  # noqa: SLF001
 
     try:
         comments_part = docx_doc.part.part_related_by(

@@ -2,10 +2,13 @@
 
 import io
 
+import pytest
+
 import cmi_docx
 
 
-def test_simple_document() -> None:
+@pytest.mark.asyncio
+async def test_simple_document() -> None:
     """Test creating a simple document with text."""
     doc = cmi_docx.declarative.Document(
         sections=[
@@ -18,11 +21,12 @@ def test_simple_document() -> None:
     )
 
     output = io.BytesIO()
-    doc.save(output)
+    await doc.save(output)
     assert output.tell() > 0
 
 
-def test_document_with_text_runs() -> None:
+@pytest.mark.asyncio
+async def test_document_with_text_runs() -> None:
     """Test creating a document with formatted text runs."""
     doc = cmi_docx.declarative.Document(
         sections=[
@@ -43,11 +47,12 @@ def test_document_with_text_runs() -> None:
     )
 
     output = io.BytesIO()
-    doc.save(output)
+    await doc.save(output)
     assert output.tell() > 0
 
 
-def test_document_with_heading() -> None:
+@pytest.mark.asyncio
+async def test_document_with_heading() -> None:
     """Test creating a document with headings."""
     doc = cmi_docx.declarative.Document(
         sections=[
@@ -62,11 +67,12 @@ def test_document_with_heading() -> None:
     )
 
     output = io.BytesIO()
-    doc.save(output)
+    await doc.save(output)
     assert output.tell() > 0
 
 
-def test_document_with_tabs_and_breaks() -> None:
+@pytest.mark.asyncio
+async def test_document_with_tabs_and_breaks() -> None:
     """Test creating a document with tabs and breaks."""
     doc = cmi_docx.declarative.Document(
         sections=[
@@ -92,11 +98,12 @@ def test_document_with_tabs_and_breaks() -> None:
     )
 
     output = io.BytesIO()
-    doc.save(output)
+    await doc.save(output)
     assert output.tell() > 0
 
 
-def test_document_metadata() -> None:
+@pytest.mark.asyncio
+async def test_document_metadata() -> None:
     """Test creating a document with metadata."""
     doc = cmi_docx.declarative.Document(
         sections=[
@@ -112,10 +119,10 @@ def test_document_metadata() -> None:
     )
 
     output = io.BytesIO()
-    doc.save(output)
+    await doc.save(output)
     assert output.tell() > 0
 
-    docx_doc = doc.to_docx()
+    docx_doc = await doc.to_docx()
     assert docx_doc.core_properties.title == "Test Document"
     assert docx_doc.core_properties.author == "Test Author"
     assert docx_doc.core_properties.subject == "Testing"

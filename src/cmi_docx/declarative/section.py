@@ -4,8 +4,7 @@ import dataclasses
 from collections.abc import Coroutine
 from typing import Literal
 
-import cmi_docx
-from cmi_docx.declarative import paragraph, table
+from cmi_docx.declarative import base, paragraph, table
 
 type BlockElement = paragraph.Paragraph | table.Table
 type HeaderFooterType = Literal["default", "first", "even"]
@@ -42,7 +41,7 @@ class SectionProperties:
 
 
 @dataclasses.dataclass
-class Header(cmi_docx.declarative.Component):
+class Header(base.Component):
     """A section header.
 
     Attributes:
@@ -61,7 +60,7 @@ class Header(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class Footer(cmi_docx.declarative.Component):
+class Footer(base.Component):
     """A section footer.
 
     Attributes:
@@ -80,7 +79,7 @@ class Footer(cmi_docx.declarative.Component):
 
 
 @dataclasses.dataclass
-class Section(cmi_docx.declarative.Component):
+class Section(base.Component):
     """A document section with optional headers and footers.
 
     Attributes:
