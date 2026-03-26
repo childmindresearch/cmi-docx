@@ -130,7 +130,7 @@ class ExtendParagraph:
             style: The style to apply to the replacement text. If None, matches
                 the style of the first run in the replacement window.
         """
-        comment_preserver = comment.CommentPreserver(self.paragraph._element)
+        comment_preserver = comment.CommentPreserver(self.paragraph._element)  # noqa: SLF001
         comments = comment_preserver.extract_comments()
         comment_preserver.strip_comments()
 
@@ -185,12 +185,12 @@ class ExtendParagraph:
         if index == len(self.paragraph.runs):
             self.paragraph.add_run(text)
         else:
-            new_run = self.paragraph._element._new_r()
+            new_run = self.paragraph._element._new_r()  # noqa: SLF001
             new_run.text = text
             if index < 0:
-                self.paragraph.runs[index]._element.addnext(new_run)
+                self.paragraph.runs[index]._element.addnext(new_run)  # noqa: SLF001
             else:
-                self.paragraph.runs[index]._element.addprevious(new_run)
+                self.paragraph.runs[index]._element.addprevious(new_run)  # noqa: SLF001
 
         run.ExtendRun(self.paragraph.runs[index]).format(style)
         return self.paragraph.runs[index]

@@ -14,7 +14,9 @@ from docx.opc import packuri, part
 from docx.oxml import ns
 from docx.oxml.text import run as docx_run
 from docx.text import paragraph, run
-from lxml import etree
+from lxml import (
+    etree,  # ty:ignore[unresolved-import] # This does work; not sure why not detected.
+)
 
 _COMMENTS_PART_DEFAULT_XML_BYTES: Final[bytes] = (
     b"""
@@ -78,7 +80,7 @@ def add_comment(
         msg = "Location must be a single element or a tuple of two."
         raise ValueError(msg)
     else:
-        elements = (location[0]._element, location[1]._element)  # ty:ignore[unresolved-attribute]  # noqa: SLF001
+        elements = (location[0]._element, location[1]._element)  # noqa: SLF001  # ty:ignore[unresolved-attribute]
 
     try:
         comments_part = docx_doc.part.part_related_by(
@@ -103,7 +105,9 @@ def add_comment(
     comment_element = oxml.OxmlElement("w:comment")
     comment_element.set(ns.qn("w:id"), comment_id)
     comment_element.set(ns.qn("w:author"), author)
-    comment_element.set(ns.qn("w:date"), datetime.datetime.now().isoformat())
+    comment_element.set(
+        ns.qn("w:date"), datetime.datetime.now(datetime.UTC).isoformat()
+    )
 
     # Create the text element for the comment
     for para in text.split("\n"):
@@ -115,7 +119,7 @@ def add_comment(
         comment_paragraph.append(comment_run)
         comment_element.append(comment_paragraph)
         comments_xml.append(comment_element)
-    comments_part._blob = ET.tostring(comments_xml)
+    comments_part._blob = ET.tostring(comments_xml)  # noqa: SLF001
 
     # Create the commentRangeStart and commentRangeEnd elements
     comment_range_start = oxml.OxmlElement("w:commentRangeStart")
@@ -206,17 +210,13 @@ class CommentPreserver:
 
     def strip_comments(self) -> None:
         """Remove all comment-related elements from the paragraph."""
-        to_remove = []
 
         def should_remove_run(run: docx_run.CT_R) -> bool:
             """Helper to determine if a run should be removed."""
-            # Check for nested runs
             if any(child.tag == f"{{{self.ns['w']}}}r" for child in run):
                 return False
-            # Check if empty
             if len(run) == 0:
                 return True
-            # Check if it's a comment reference run
             if (
                 len(run) == 1
                 and run[0].tag == f"{{{self.ns['w']}}}rPr"
@@ -226,7 +226,6 @@ class CommentPreserver:
                 )
             ):
                 return True
-            # Check if it only contains rPr and no text
             has_text = any(child.tag == f"{{{self.ns['w']}}}t" for child in run)
             has_only_props = all(
                 child.tag
@@ -235,19 +234,18 @@ class CommentPreserver:
             )
             return not has_text and has_only_props
 
-        for elem in self.paragraph.iter():
-            # Check for comment range elements
-            if any(tag in elem.tag for tag in ["commentRange", "commentReference"]) or (
-                elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem)
-            ):
-                to_remove.append(elem)
+        to_remove = [
+            elem
+            for elem in self.paragraph.iter()
+            if any(tag in elem.tag for tag in ["commentRange", "commentReference"])
+            or (elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem))
+        ]
 
         for elem in to_remove:
             parent = elem.getparent()
             if parent is not None:
                 parent.remove(elem)
 
-        # Clean up any remaining empty runs after removing elements
         for elem in list(self.paragraph):
             if elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem):
                 self.paragraph.remove(elem)
@@ -337,10 +335,31 @@ class CommentPreserver:
 
     def _insert_at_position(self, elem: etree._Element, text_pos: int) -> None:
         """Insert element at the specified text position."""
-        current_pos = 0
+        runs_with_text = self._collect_text_runs()
 
-        # First collect all text-containing runs and their positions
+        if not runs_with_text:
+            if self.paragraph:
+                self.paragraph.insert(0, elem)
+            else:
+                self.paragraph.append(elem)
+            return
+
+        for run_elem, start_pos, length in runs_with_text:
+            if start_pos + length >= text_pos:
+                if start_pos + length == text_pos:
+                    insert_idx = self.paragraph.index(run_elem) + 1
+                    self.paragraph.insert(insert_idx, elem)
+                else:
+                    insert_idx = self.paragraph.index(run_elem)
+                    self.paragraph.insert(insert_idx, elem)
+                return
+
+        self.paragraph.append(elem)
+
+    def _collect_text_runs(self) -> list[tuple]:
+        """Collect all text-containing runs with their positions."""
         runs_with_text = []
+        current_pos = 0
         for child in self.paragraph:
             if child.tag == f"{{{self.ns['w']}}}r":
                 text_elems = child.findall(f".//{{{self.ns['w']}}}t")
@@ -349,36 +368,4 @@ class CommentPreserver:
                     if text_length > 0:
                         runs_with_text.append((child, current_pos, text_length))
                         current_pos += text_length
-
-        # Handle insertion based on text position
-        if not runs_with_text:
-            # If no text runs, insert at beginning
-            if self.paragraph:
-                self.paragraph.insert(0, elem)
-            else:
-                self.paragraph.append(elem)
-            return
-
-        # Find the appropriate run based on text position
-        insert_after = None
-        for run, start_pos, length in runs_with_text:  # noqa: F402
-            if start_pos + length >= text_pos:
-                if start_pos + length == text_pos:
-                    # Exact match at end of run - insert after this run
-                    insert_after = run
-                    break
-                # Position is within or at start of run - insert before this run
-                insert_idx = self.paragraph.index(run)
-                self.paragraph.insert(insert_idx, elem)
-                return
-            insert_after = run
-
-        # If we get here, either:
-        # 1. We found an exact match at end of a run and should insert after it
-        # 2. Position is past all runs, so insert after last text run
-        if insert_after is not None:
-            insert_idx = self.paragraph.index(insert_after) + 1
-            self.paragraph.insert(insert_idx, elem)
-        else:
-            # Fallback - append at end
-            self.paragraph.append(elem)
+        return runs_with_text

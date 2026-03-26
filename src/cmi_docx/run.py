@@ -49,6 +49,9 @@ class FindRun:
             style: The style to apply to the replacement text. If None, the
                 replacement text will have the same style as the first character of the
                 original text.
+
+        Raises:
+            ValueError: If replacement was already done for this FindRun.
         """
         if self._replacement_done:
             msg = "Cannot use a FindRun replacement more than once."
@@ -94,14 +97,14 @@ class FindRun:
         for index in range(1, len(self.runs)):
             self.runs[index].text = ""
 
-        new_run = self.paragraph._element._new_r()
+        new_run = self.paragraph._element._new_r()  # noqa: SLF001
         new_run.text = replace
-        self.paragraph.runs[self.run_indices[0]]._element.addnext(new_run)
+        self.paragraph.runs[self.run_indices[0]]._element.addnext(new_run)  # noqa: SLF001
         ExtendRun(self.paragraph.runs[self.run_indices[0] + 1]).format(style)
 
-        post_run = self.paragraph._element._new_r()
+        post_run = self.paragraph._element._new_r()  # noqa: SLF001
         post_run.text = post
-        self.paragraph.runs[self.run_indices[0] + 1]._element.addnext(post_run)
+        self.paragraph.runs[self.run_indices[0] + 1]._element.addnext(post_run)  # noqa: SLF001
         pre_style = ExtendRun(self.paragraph.runs[self.run_indices[0]]).get_format()
         ExtendRun(self.paragraph.runs[self.run_indices[0] + 2]).format(pre_style)
 
@@ -116,6 +119,9 @@ class FindRun:
         Returns:
             True if the character index of the first run is less than the
             character index of the other run.
+
+        Raises:
+            ValueError: If comparing FindRuns from different paragraphs.
         """
         if self.paragraph != other.paragraph:
             msg = "Cannot compare FindRun objects from different paragraphs."
@@ -142,6 +148,9 @@ class ExtendRun:
 
         Args:
             style: The style to apply to the run.
+
+        Raises:
+            ValueError: If both superscript and subscript are set.
         """
         if style.superscript and style.subscript:
             msg = "Cannot have superscript and subscript at the same time."

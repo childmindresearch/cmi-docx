@@ -22,25 +22,29 @@ class ExtendTable:
 
         Args:
             style: The style to use.
+
+        Raises:
+            ValueError: If table look was not found.
         """
         if style.sections:
-            section_names = [
+            section_names = (
                 "firstColumn",
                 "firstRow",
                 "lastColumn",
                 "lastRow",
                 "noHBand",
                 "noVBand",
-            ]
+            )
             for name in section_names:
                 value = getattr(style.sections, name)
                 if value is None:
                     continue
 
-                tbl_pr = self.table._tblPr
+                tbl_pr = self.table._tblPr  # noqa: SLF001
                 tbl_look = tbl_pr.first_child_found_in("w:tblLook")
                 if tbl_look is None:
-                    raise ValueError("Table look was not found.")
+                    msg = "Table look was not found."
+                    raise ValueError(msg)
                 tbl_look.set(ns.qn(f"w:{name}"), str(int(value)))
 
 
@@ -69,8 +73,8 @@ class ExtendCell:
             shading = oxml.parse_xml(
                 (
                     r'<w:shd {} w:fill="'
-                     f"{rgb_to_hex(*style.background_rgb)}"
-                     r'"/>'
+                    f"{rgb_to_hex(*style.background_rgb)}"
+                    r'"/>'
                 ).format(
                     ns.nsdecls("w"),
                 ),
@@ -87,7 +91,7 @@ class ExtendCell:
         Args:
             border: The style to apply to the cell.
         """
-        tc_pr = self.cell._tc.get_or_add_tcPr()
+        tc_pr = self.cell._tc.get_or_add_tcPr()  # noqa: SLF001
 
         tc_borders = tc_pr.first_child_found_in("w:tcBorders")
         if tc_borders is None:
@@ -107,15 +111,15 @@ class ExtendCell:
                     element.set(ns.qn(f"w:{key}"), str(value))
 
 
-def rgb_to_hex(r: int, g: int, b: int) -> str:
+def rgb_to_hex(red: int, green: int, blue: int) -> str:
     """Converts RGB values to a hexadecimal color code.
 
     Args:
-        r: The red component of the RGB color.
-        g: The green component of the RGB color.
-        b: The blue component of the RGB color.
+        red: The red component of the RGB color.
+        green: The green component of the RGB color.
+        blue: The blue component of the RGB color.
 
     Returns:
         The hexadecimal color code representing the RGB color.
     """
-    return f"#{r:02x}{g:02x}{b:02x}".upper()
+    return f"#{red:02x}{green:02x}{blue:02x}".upper()

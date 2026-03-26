@@ -18,7 +18,11 @@ def test_find_run_lt_same_paragraph() -> None:
 
 
 def test_find_run_lt_different_paragraphs() -> None:
-    """Test that comparing FindRun of different paragraphs fails."""
+    """Test that comparing FindRun of different paragraphs fails.
+
+    Raises:
+        ValueError: When comparing FindRuns from different paragraphs.
+    """
     document = docx.Document()
     paragraph1 = document.add_paragraph("Hello, world!")
     paragraph2 = document.add_paragraph("Hello, world!")
@@ -26,7 +30,9 @@ def test_find_run_lt_different_paragraphs() -> None:
     find_run1 = run.FindRun(paragraph1, (0, 1), (0, 5))
     find_run2 = run.FindRun(paragraph2, (0, 1), (0, 5))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Cannot compare FindRun objects from different paragraphs"
+    ):
         assert find_run1 < find_run2
 
 
@@ -43,7 +49,11 @@ def test_find_run_replace_no_style_one_run() -> None:
 
 
 def test_find_run_replace_twice() -> None:
-    """Test that replacing a run twice works."""
+    """Test that replacing a run twice raises ValueError.
+
+    Raises:
+        ValueError: When attempting a second replacement.
+    """
     document = docx.Document()
     paragraph = document.add_paragraph("")
     paragraph.add_run("Hello, world!")
@@ -51,7 +61,9 @@ def test_find_run_replace_twice() -> None:
     find_run = run.FindRun(paragraph, (0, 1), (0, 5))
     find_run.replace("Goodbye")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Cannot use a FindRun replacement more than once"
+    ):
         find_run.replace("Goodbye")
 
 
