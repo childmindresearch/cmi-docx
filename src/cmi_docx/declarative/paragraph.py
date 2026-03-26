@@ -5,12 +5,12 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
-from docx.enum import text as docx_text
-
 from cmi_docx.declarative import base
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Coroutine
+
+    from docx.enum import text as docx_text
 
     from cmi_docx.declarative import image
 

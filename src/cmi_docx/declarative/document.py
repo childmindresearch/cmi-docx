@@ -152,11 +152,11 @@ def _pack_section(docx_doc: docx_document.Document, sec: section.Section) -> Non
 
 def _get_header_or_footer(
     section: docx_section.Section, hf_type: str, *, is_header: bool
-):
+) -> docx_section.Section | None:
     """Get the appropriate header or footer from a section.
 
     Args:
-        docx_section: The python-docx Section.
+        section: The python-docx Section.
         hf_type: The type ('default', 'first', 'even').
         is_header: True for header, False for footer.
 

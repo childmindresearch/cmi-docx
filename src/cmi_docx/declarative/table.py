@@ -6,11 +6,10 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 from cmi_docx.declarative import base
+from cmi_docx.declarative import paragraph
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine, Iterable
-
-    import cmi_docx.declarative
 
 
 @dataclasses.dataclass
@@ -25,9 +24,9 @@ class TableCell(base.Component):
 
     children: (
         Iterable[
-            cmi_docx.declarative.Paragraph
+            paragraph.Paragraph
             | Table
-            | Coroutine[None, None, cmi_docx.declarative.Paragraph | Table]
+            | Coroutine[None, None, paragraph.Paragraph | Table]
         ]
         | None
     ) = None
