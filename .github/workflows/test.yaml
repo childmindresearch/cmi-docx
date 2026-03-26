@@ -5,7 +5,7 @@ permissions:
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
 
 jobs:
@@ -14,53 +14,55 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ['3.10', '3.11', '3.12', '3.13']
+        python_version: ["3.12", "3.13", "3.14"]
         resolution: [lowest-direct, highest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      run: pipx install uv
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python_version }}
-        cache: pip
-    - name: Install dependencies
-      run: |
-        uv sync --resolution=${{ matrix.resolution }}
-      shell: bash
-    - name: Run tests
-      id: run-tests
-      run: >
-        uv run pytest \
-          --junitxml=pytest.xml \
-          --cov-report=term-missing:skip-covered \
-          --cov-report=xml:coverage.xml \
-          --cov=src tests \
-          --log-level=DEBUG \
-          --verbose
-      shell: bash
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        verbose: true
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: pipx install uv
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          uv sync --resolution=${{ matrix.resolution }}
+        shell: bash
+      - name: Run tests
+        id: run-tests
+        run: >
+          uv run pytest \
+            --junitxml=pytest.xml \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:coverage.xml \
+            --cov=src tests \
+            --log-level=DEBUG \
+            --verbose
+        shell: bash
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
 
   ruff:
     runs-on: ubuntu-latest
     steps:
-    - uses: astral-sh/ruff-action@57714a7c8a2e59f32539362ba31877a1957dded1
+      - uses: astral-sh/ruff-action@57714a7c8a2e59f32539362ba31877a1957dded1
 
-  mypy:
+  ty:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install uv
-      run: pipx install uv
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: pip
-    - run: |
-        uv sync
-        uv run mypy .
+      - uses: actions/checkout@v4
+      - name: Install uv
+        run: pipx install uv
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+          cache: pip
+      - name: Install dependencies
+        run: uv sync
+        shell: bash
+      - name: Run ty
+        run: uv run ty check .

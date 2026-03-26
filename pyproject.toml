@@ -1,33 +1,28 @@
 [project]
 name = "cmi-docx"
-version = "0.4.2"
+version = "0.5.0"
 description = "Additional tooling for Python-docx."
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-  "python-docx>=1.1.2"
-]
+requires-python = ">=3.12"
+dependencies = ["python-docx>=1.1.2"]
 
-[tool.uv]
-dev-dependencies = [
-  "mypy>=1.13.0",
-  "pre-commit>=4.0.1",
+[dependency-groups]
+dev = [
   "pytest>=8.3.4",
   "pytest-cov>=6.0.0",
-  "ruff>=0.8.3",
-  "pdoc>=15.0.1"
+  "pdoc>=15.0.1",
+  "ty>=0.0.25",
+  "sergey-lint>=0.1.1",
+  "prek>=0.3.8",
+  "ruff>=0.15.7"
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cmi_docx"]
 
 [tool.pytest.ini_options]
-pythonpath = [
-  "src"
-]
-testpaths = [
-  "tests"
-]
+pythonpath = ["src"]
+testpaths = ["tests"]
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -59,13 +54,28 @@ exclude = [
 line-length = 88
 indent-width = 4
 src = ["src"]
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
-select = ["ANN", "D", "E", "F", "I"]
+preview = false
+select = ["ALL"]
 ignore = [
-  "ANN101",  # self should not be annotated.
-  "ANN102"  # cls should not be annotated.
+  "PYI063",  # Preview rule not correctly ignored.
+  "SIM300",  # Can cause mypy issues in SQLAlchemy where statements.
+  # Recommended ignores by Astral https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules)
+  "W191",  # Tab indentation
+  "E111",  # Indentation with invalid multiple
+  "E114",  # Indentation with invalid multiple comment
+  "E117",  # Over indented
+  "D206",  # Docstring tab indentation
+  "D300",  # Triple single quotes
+  "Q000",  # Bad quotes inline string
+  "Q001",  # Bad quotes multiline string
+  "Q002",  # Bad quotes docstring
+  "Q003",  # Avoidable escaped quote
+  "COM812",  # Missing trailing comma
+  "COM819",  # Prohibited trailing comma
+  "ISC002"  # Multi-line implicit string concatenation
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -75,7 +85,13 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = []
+"tests/**/*.py" = [
+  "S101",  # asserts should be used in pytest
+  "SLF001",  # accessing private members in tests is fine
+  "INP001",  # tests should not be a module
+  "ARG001"  # tests can have ununsed arguments (fixtures with side-effects)
+]
+"local/**/*" = ["ALL"]
 
 [tool.ruff.format]
 quote-style = "double"

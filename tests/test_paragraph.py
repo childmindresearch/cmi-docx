@@ -43,7 +43,7 @@ def test_find_multiple_in_paragraph(sample_paragraph: docx_paragraph.Paragraph) 
 def test_find_in_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
     """Test finding a text in a single paragraph run."""
     extend_paragraph = paragraph.ExtendParagraph(sample_paragraph)
-    expected = [
+    expected = (
         paragraph.run.FindRun(
             paragraph=sample_paragraph,
             run_indices=(0, 0),
@@ -54,7 +54,7 @@ def test_find_in_single_run(sample_paragraph: docx_paragraph.Paragraph) -> None:
             run_indices=(0, 0),
             character_indices=(5, 7),
         ),
-    ]
+    )
 
     actual = extend_paragraph.find_in_runs("is")
 
