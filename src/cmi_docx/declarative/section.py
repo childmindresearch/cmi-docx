@@ -16,7 +16,6 @@ class SectionProperties:
 
     Attributes:
         page_size: Page dimensions.
-        page_margins: Page margins.
         page_orientation: 'portrait' or 'landscape'.
         page_numbering: Page numbering configuration.
         columns: Column configuration (dict with 'count', 'space', 'separator').
@@ -27,9 +26,6 @@ class SectionProperties:
     """
 
     page_size: dict[Literal["width", "height"], int] | None = None
-    page_margins: (
-        dict[Literal["top", "bottom", "left", "right", "footer", "gutter"], int] | None
-    ) = None
     page_orientation: Literal["portrait", "landscape"] | None = None
     page_numbering: dict[Literal["start", "format"], int | str] | None = None
     columns: dict[Literal["count", "space", "separator"], int | bool] | None = None

@@ -34,7 +34,6 @@ class TextRun(base.Component):
         strike: Apply strikethrough formatting.
         all_caps: Apply all caps formatting.
         small_caps: Apply small caps formatting.
-        highlight: Highlight color name.
     """
 
     text: Awaitable[str] | str
@@ -50,7 +49,6 @@ class TextRun(base.Component):
     strike: bool | None = None
     all_caps: bool | None = None
     small_caps: bool | None = None
-    highlight: str | None = None
 
 
 @dataclasses.dataclass

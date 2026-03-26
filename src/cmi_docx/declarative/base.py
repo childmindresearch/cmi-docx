@@ -49,6 +49,10 @@ class Component:
     async children concurrently.
     """
 
+    def __await__(self) -> Generator[None, None, Self]:
+        """Convenience method for awaiting a component."""
+        return self.resolve().__await__()
+
     async def resolve(self) -> Self:
         """Recursively resolve all async children concurrently.
 

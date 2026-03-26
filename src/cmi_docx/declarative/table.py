@@ -20,11 +20,7 @@ class TableCell(base.Component):
     Attributes:
         children: List of Paragraph or Table components, or coroutines that
             resolve to these types.
-        width: Cell width configuration (dict with 'size' and 'type' keys).
         borders: Cell border configuration.
-        shading: Cell shading/background color.
-        vertical_align: Vertical alignment ('top', 'center', 'bottom').
-        margins: Cell margins (dict with 'top', 'bottom', 'left', 'right').
     """
 
     children: (
@@ -35,11 +31,7 @@ class TableCell(base.Component):
         ]
         | None
     ) = None
-    width: dict[str, int | str] | None = None
     borders: dict[str, dict[str, str | int]] | None = None
-    shading: dict[str, str] | None = None
-    vertical_align: str | None = None
-    margins: dict[str, int] | None = None
 
 
 @dataclasses.dataclass
@@ -48,15 +40,9 @@ class TableRow(base.Component):
 
     Attributes:
         children: List of TableCell components or coroutines that resolve to cells.
-        height: Row height configuration (dict with 'value' and 'rule' keys).
-        cant_split: Prevent row from splitting across pages.
-        header: Mark row as header row.
     """
 
     children: list[TableCell | Coroutine[None, None, TableCell]]
-    height: dict[str, int | str] | None = None
-    cant_split: bool | None = None
-    header: bool | None = None
 
 
 @dataclasses.dataclass
