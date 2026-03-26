@@ -59,7 +59,6 @@ class FindRun:
         else:
             self._replace_with_style(replace, style)
         self._replacement_done = True
-        return
 
     def _replace_without_style(self, replace: str) -> None:
         """Replaces the text in the runs with the replacement text.

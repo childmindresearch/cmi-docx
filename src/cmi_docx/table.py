@@ -69,8 +69,8 @@ class ExtendCell:
             shading = oxml.parse_xml(
                 (
                     r'<w:shd {} w:fill="'
-                    + f"{rgb_to_hex(*style.background_rgb)}"
-                    + r'"/>'
+                     f"{rgb_to_hex(*style.background_rgb)}"
+                     r'"/>'
                 ).format(
                     ns.nsdecls("w"),
                 ),
@@ -95,7 +95,7 @@ class ExtendCell:
             tc_pr.append(tc_borders)
 
         for edge in border.sides:
-            tag = "w:{}".format(edge)
+            tag = f"w:{edge}"
             element = tc_borders.find(ns.qn(tag))
             if element is None:
                 element = oxml.OxmlElement(tag)
@@ -104,7 +104,7 @@ class ExtendCell:
             # looks like order of attributes is important
             for key in ["sz", "val", "color"]:
                 if value := getattr(border, key):
-                    element.set(ns.qn("w:{}".format(key)), str(value))
+                    element.set(ns.qn(f"w:{key}"), str(value))
 
 
 def rgb_to_hex(r: int, g: int, b: int) -> str:

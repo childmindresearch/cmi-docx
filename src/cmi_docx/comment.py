@@ -5,7 +5,8 @@ Code based on sample code in https://github.com/python-openxml/python-docx/issue
 
 import dataclasses
 import datetime
-from xml.etree import ElementTree
+from typing import Final
+from xml.etree import ElementTree as ET
 
 from docx import document, oxml
 from docx.opc import constants as docx_constants
@@ -15,7 +16,7 @@ from docx.oxml.text import run as docx_run
 from docx.text import paragraph, run
 from lxml import etree
 
-_COMMENTS_PART_DEFAULT_XML_BYTES = (
+_COMMENTS_PART_DEFAULT_XML_BYTES: Final[bytes] = (
     b"""
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r
 <w:comments
@@ -67,13 +68,17 @@ def add_comment(
             and the second element is the end.
         author: Name of the comment author.
         text: Content of the comment.
+
+    Raises:
+        ValueError: If location has incorrect typing.
     """
     if not isinstance(location, tuple):
-        elements = (location._element, location._element)
-    elif len(location) > 2:
-        raise ValueError("Location must be a single element or a tuple of two.")
+        elements = (location._element, location._element)  # noqa: SLF001
+    elif len(location) > 2:  # noqa: PLR2004
+        msg = "Location must be a single element or a tuple of two."
+        raise ValueError(msg)
     else:
-        elements = (location[0]._element, location[1]._element)
+        elements = (location[0]._element, location[1]._element)  # ty:ignore[unresolved-attribute]  # noqa: SLF001
 
     try:
         comments_part = docx_doc.part.part_related_by(
@@ -110,7 +115,7 @@ def add_comment(
         comment_paragraph.append(comment_run)
         comment_element.append(comment_paragraph)
         comments_xml.append(comment_element)
-    comments_part._blob = ElementTree.tostring(comments_xml)
+    comments_part._blob = ET.tostring(comments_xml)
 
     # Create the commentRangeStart and commentRangeEnd elements
     comment_range_start = oxml.OxmlElement("w:commentRangeStart")
@@ -216,8 +221,8 @@ class CommentPreserver:
                 len(run) == 1
                 and run[0].tag == f"{{{self.ns['w']}}}rPr"
                 and any(
-                    "CommentReference" in e.get(f"{{{self.ns['w']}}}val", "")
-                    for e in run[0].iter()
+                    "CommentReference" in elem.get(f"{{{self.ns['w']}}}val", "")
+                    for elem in run[0].iter()
                 )
             ):
                 return True
@@ -232,10 +237,9 @@ class CommentPreserver:
 
         for elem in self.paragraph.iter():
             # Check for comment range elements
-            if any(tag in elem.tag for tag in ["commentRange", "commentReference"]):
-                to_remove.append(elem)
-            # Check for runs that should be removed
-            elif elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem):
+            if any(tag in elem.tag for tag in ["commentRange", "commentReference"]) or (
+                elem.tag == f"{{{self.ns['w']}}}r" and should_remove_run(elem)
+            ):
                 to_remove.append(elem)
 
         for elem in to_remove:
@@ -341,7 +345,7 @@ class CommentPreserver:
             if child.tag == f"{{{self.ns['w']}}}r":
                 text_elems = child.findall(f".//{{{self.ns['w']}}}t")
                 if text_elems:
-                    text_length = sum(len(t.text or "") for t in text_elems)
+                    text_length = sum(len(elem.text or "") for elem in text_elems)
                     if text_length > 0:
                         runs_with_text.append((child, current_pos, text_length))
                         current_pos += text_length
@@ -357,7 +361,7 @@ class CommentPreserver:
 
         # Find the appropriate run based on text position
         insert_after = None
-        for i, (run, start_pos, length) in enumerate(runs_with_text):  # noqa: F402
+        for run, start_pos, length in runs_with_text:  # noqa: F402
             if start_pos + length >= text_pos:
                 if start_pos + length == text_pos:
                     # Exact match at end of run - insert after this run

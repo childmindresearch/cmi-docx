@@ -144,17 +144,19 @@ class ExtendDocument:
 
         Returns:
             The new paragraph.
+
+        Raises:
+            IndexError: If the index is out of range.
         """
         n_paragraphs = len(self.document.paragraphs)
         if index > n_paragraphs:
-            raise ValueError(f"Index {index} is out of range.")
+            msg = f"Index {index} is out of range."
+            raise IndexError(msg)
 
         if index == n_paragraphs:
             new_paragraph = self.document.add_paragraph(style=style)
         else:
-            new_paragraph = new_paragraph = self.document.paragraphs[
-                index
-            ]._insert_paragraph_before()
-            new_paragraph.style = style  # type: ignore[assignment] # Mypy ignores setter types.
+            new_paragraph = self.document.paragraphs[index]._insert_paragraph_before()  # noqa: SLF001
+            new_paragraph.style = style
 
         return new_paragraph
