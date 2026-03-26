@@ -1,17 +1,13 @@
 """Section, header, and footer components for declarative documents."""
 
 import dataclasses
-from typing import TYPE_CHECKING, Literal
+from collections.abc import Coroutine
+from typing import Literal
 
-from cmi_docx import declarative
+import cmi_docx
+from cmi_docx.declarative import paragraph, table
 
-if TYPE_CHECKING:
-    from collections.abc import Coroutine
-
-    from cmi_docx.declarative.paragraph import Paragraph
-    from cmi_docx.declarative.table import Table
-
-type BlockElement = declarative.Paragraph | declarative.Table
+type BlockElement = paragraph.Paragraph | table.Table
 type HeaderFooterType = Literal["default", "first", "even"]
 
 
@@ -46,7 +42,7 @@ class SectionProperties:
 
 
 @dataclasses.dataclass
-class Header(declarative.Component):
+class Header(cmi_docx.declarative.Component):
     """A section header.
 
     Attributes:
@@ -55,12 +51,17 @@ class Header(declarative.Component):
     """
 
     children: (
-        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+        list[
+            paragraph.Paragraph
+            | table.Table
+            | Coroutine[None, None, paragraph.Paragraph | table.Table]
+        ]
+        | None
     ) = None
 
 
 @dataclasses.dataclass
-class Footer(declarative.Component):
+class Footer(cmi_docx.declarative.Component):
     """A section footer.
 
     Attributes:
@@ -69,12 +70,17 @@ class Footer(declarative.Component):
     """
 
     children: (
-        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+        list[
+            paragraph.Paragraph
+            | table.Table
+            | Coroutine[None, None, paragraph.Paragraph | table.Table]
+        ]
+        | None
     ) = None
 
 
 @dataclasses.dataclass
-class Section(declarative.Component):
+class Section(cmi_docx.declarative.Component):
     """A document section with optional headers and footers.
 
     Attributes:
@@ -88,7 +94,12 @@ class Section(declarative.Component):
     """
 
     children: (
-        list["Paragraph | Table | Coroutine[None, None, Paragraph | Table]"] | None
+        list[
+            paragraph.Paragraph
+            | table.Table
+            | Coroutine[None, None, paragraph.Paragraph | table.Table]
+        ]
+        | None
     ) = None
     properties: SectionProperties | None = None
     headers: dict[HeaderFooterType, Header] | None = None

@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Coroutine, Iterable
+from typing import TYPE_CHECKING
 
-from cmi_docx import declarative
+import cmi_docx
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine, Iterable
 
 
 @dataclasses.dataclass
-class TableCell(declarative.Component):
+class TableCell(cmi_docx.declarative.Component):
     """A table cell containing paragraphs or nested tables.
 
     Attributes:
@@ -24,9 +27,9 @@ class TableCell(declarative.Component):
 
     children: (
         Iterable[
-            declarative.Paragraph
+            cmi_docx.declarative.Paragraph
             | Table
-            | Coroutine[None, None, declarative.Paragraph | Table]
+            | Coroutine[None, None, cmi_docx.declarative.Paragraph | Table]
         ]
         | None
     ) = None
@@ -38,7 +41,7 @@ class TableCell(declarative.Component):
 
 
 @dataclasses.dataclass
-class TableRow(declarative.Component):
+class TableRow(cmi_docx.declarative.Component):
     """A table row containing cells.
 
     Attributes:
@@ -55,7 +58,7 @@ class TableRow(declarative.Component):
 
 
 @dataclasses.dataclass
-class Table(declarative.Component):
+class Table(cmi_docx.declarative.Component):
     """A table with rows and cells.
 
     Attributes:

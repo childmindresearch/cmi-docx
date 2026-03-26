@@ -3,19 +3,13 @@
 import dataclasses
 import io
 import pathlib
-from typing import TYPE_CHECKING
-
-from cmi_docx.declarative import pack
-from cmi_docx.declarative.base import Component
-
-if TYPE_CHECKING:
-    from collections.abc import Coroutine
-
-    from cmi_docx.declarative.section import Section
+from collections.abc import Coroutine
+from docx import document
+from cmi_docx.declarative import base, section
 
 
 @dataclasses.dataclass
-class Document(Component):
+class Document(base.Component):
     """A Word document with sections.
 
     This is the top-level container for a declarative document. It can be
@@ -53,7 +47,7 @@ class Document(Component):
         ...     doc.save("output.docx")
     """
 
-    sections: list["Section | Coroutine[None, None, Section]"]
+    sections: list[section.Section | Coroutine[None, None, section.Section]]
     creator: str | None = None
     title: str | None = None
     subject: str | None = None
@@ -80,6 +74,8 @@ class Document(Component):
             )
             raise RuntimeError(msg)
 
+        from cmi_docx.declarative import pack  # noqa: PLC0415 # Circular import
+
         docx_doc = pack.pack(self)
         docx_doc.save(path_or_stream)
 
@@ -98,5 +94,7 @@ class Document(Component):
                 "Use 'await Document(...)' to resolve all async children first."
             )
             raise RuntimeError(msg)
+
+        from cmi_docx.declarative import pack  # noqa: PLC0415 # Circular import
 
         return pack.pack(self)

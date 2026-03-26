@@ -2,23 +2,16 @@
 
 import io
 
-from cmi_docx.declarative import (
-    Break,
-    Document,
-    Paragraph,
-    Section,
-    Tab,
-    TextRun,
-)
+import cmi_docx
 
 
 def test_simple_document() -> None:
     """Test creating a simple document with text."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="Hello World"),
+                    cmi_docx.declarative.Paragraph(text="Hello World"),
                 ],
             ),
         ],
@@ -31,15 +24,17 @@ def test_simple_document() -> None:
 
 def test_document_with_text_runs() -> None:
     """Test creating a document with formatted text runs."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(
+                    cmi_docx.declarative.Paragraph(
                         children=[
-                            TextRun(text="Bold text", bold=True),
-                            TextRun(text=" and "),
-                            TextRun(text="italic text", italic=True),
+                            cmi_docx.declarative.TextRun(text="Bold text", bold=True),
+                            cmi_docx.declarative.TextRun(text=" and "),
+                            cmi_docx.declarative.TextRun(
+                                text="italic text", italic=True
+                            ),
                         ],
                     ),
                 ],
@@ -54,13 +49,13 @@ def test_document_with_text_runs() -> None:
 
 def test_document_with_heading() -> None:
     """Test creating a document with headings."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="Main Heading", heading=1),
-                    Paragraph(text="Subheading", heading=2),
-                    Paragraph(text="Body text"),
+                    cmi_docx.declarative.Paragraph(text="Main Heading", heading=1),
+                    cmi_docx.declarative.Paragraph(text="Subheading", heading=2),
+                    cmi_docx.declarative.Paragraph(text="Body text"),
                 ],
             ),
         ],
@@ -73,22 +68,22 @@ def test_document_with_heading() -> None:
 
 def test_document_with_tabs_and_breaks() -> None:
     """Test creating a document with tabs and breaks."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(
+                    cmi_docx.declarative.Paragraph(
                         children=[
-                            TextRun(text="Before tab"),
-                            Tab(),
-                            TextRun(text="After tab"),
+                            cmi_docx.declarative.TextRun(text="Before tab"),
+                            cmi_docx.declarative.Tab(),
+                            cmi_docx.declarative.TextRun(text="After tab"),
                         ],
                     ),
-                    Paragraph(
+                    cmi_docx.declarative.Paragraph(
                         children=[
-                            TextRun(text="Before break"),
-                            Break(type="line"),
-                            TextRun(text="After break"),
+                            cmi_docx.declarative.TextRun(text="Before break"),
+                            cmi_docx.declarative.Break(type="line"),
+                            cmi_docx.declarative.TextRun(text="After break"),
                         ],
                     ),
                 ],
@@ -103,11 +98,11 @@ def test_document_with_tabs_and_breaks() -> None:
 
 def test_document_metadata() -> None:
     """Test creating a document with metadata."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="Content"),
+                    cmi_docx.declarative.Paragraph(text="Content"),
                 ],
             ),
         ],

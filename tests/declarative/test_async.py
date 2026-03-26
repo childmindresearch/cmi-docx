@@ -5,29 +5,29 @@ import io
 
 import pytest
 
-from cmi_docx.declarative import Document, Paragraph, Section, TextRun
+import cmi_docx
 
 
-async def fetch_paragraph() -> Paragraph:
+async def fetch_paragraph() -> cmi_docx.declarative.Paragraph:
     """Simulate fetching a paragraph asynchronously."""
     await asyncio.sleep(0.01)
-    return Paragraph(text="Async paragraph")
+    return cmi_docx.declarative.Paragraph(text="Async paragraph")
 
 
-async def fetch_text_run() -> TextRun:
+async def fetch_text_run() -> cmi_docx.declarative.TextRun:
     """Simulate fetching a text run asynchronously."""
     await asyncio.sleep(0.01)
-    return TextRun(text="async text", bold=True)
+    return cmi_docx.declarative.TextRun(text="async text", bold=True)
 
 
 @pytest.mark.asyncio
 async def test_async_paragraph() -> None:
     """Test creating a document with async paragraphs."""
-    doc = await Document(
+    doc = await cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="Sync paragraph"),
+                    cmi_docx.declarative.Paragraph(text="Sync paragraph"),
                     fetch_paragraph(),
                 ],
             ),
@@ -42,13 +42,13 @@ async def test_async_paragraph() -> None:
 @pytest.mark.asyncio
 async def test_async_text_run() -> None:
     """Test creating a document with async text runs."""
-    doc = await Document(
+    doc = await cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(
+                    cmi_docx.declarative.Paragraph(
                         children=[
-                            TextRun(text="Sync text "),
+                            cmi_docx.declarative.TextRun(text="Sync text "),
                             fetch_text_run(),
                         ],
                     ),
@@ -66,19 +66,19 @@ async def test_async_text_run() -> None:
 async def test_async_section() -> None:
     """Test creating a document with async sections."""
 
-    async def fetch_section() -> Section:
+    async def fetch_section() -> cmi_docx.declarative.Section:
         await asyncio.sleep(0.01)
-        return Section(
+        return cmi_docx.declarative.Section(
             children=[
-                Paragraph(text="Async section content"),
+                cmi_docx.declarative.Paragraph(text="Async section content"),
             ],
         )
 
-    doc = await Document(
+    doc = await cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="First section"),
+                    cmi_docx.declarative.Paragraph(text="First section"),
                 ],
             ),
             fetch_section(),
@@ -95,16 +95,16 @@ async def test_concurrent_resolution() -> None:
     """Test that async children are resolved concurrently."""
     call_times: list[float] = []
 
-    async def fetch_with_timing(text: str) -> Paragraph:
+    async def fetch_with_timing(text: str) -> cmi_docx.declarative.Paragraph:
         import time
 
         call_times.append(time.time())
         await asyncio.sleep(0.05)
-        return Paragraph(text=text)
+        return cmi_docx.declarative.Paragraph(text=text)
 
-    doc = await Document(
+    doc = await cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
                     fetch_with_timing("Para 1"),
                     fetch_with_timing("Para 2"),
@@ -124,9 +124,9 @@ async def test_concurrent_resolution() -> None:
 
 def test_unresolved_document_raises_error() -> None:
     """Test that saving unresolved async document raises an error."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
                     fetch_paragraph(),
                 ],

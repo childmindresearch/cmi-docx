@@ -2,35 +2,52 @@
 
 import io
 
-from cmi_docx.declarative import (
-    Document,
-    Paragraph,
-    Section,
-    Table,
-    TableCell,
-    TableRow,
-)
+import cmi_docx
 
 
 def test_simple_table() -> None:
     """Test creating a document with a simple table."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Paragraph(text="Table Example", heading=1),
-                    Table(
+                    cmi_docx.declarative.Paragraph(text="Table Example", heading=1),
+                    cmi_docx.declarative.Table(
                         rows=[
-                            TableRow(
+                            cmi_docx.declarative.TableRow(
                                 children=[
-                                    TableCell(children=[Paragraph(text="Header 1")]),
-                                    TableCell(children=[Paragraph(text="Header 2")]),
+                                    cmi_docx.declarative.TableCell(
+                                        children=[
+                                            cmi_docx.declarative.Paragraph(
+                                                text="Header 1"
+                                            )
+                                        ]
+                                    ),
+                                    cmi_docx.declarative.TableCell(
+                                        children=[
+                                            cmi_docx.declarative.Paragraph(
+                                                text="Header 2"
+                                            )
+                                        ]
+                                    ),
                                 ],
                             ),
-                            TableRow(
+                            cmi_docx.declarative.TableRow(
                                 children=[
-                                    TableCell(children=[Paragraph(text="Row 1 Col 1")]),
-                                    TableCell(children=[Paragraph(text="Row 1 Col 2")]),
+                                    cmi_docx.declarative.TableCell(
+                                        children=[
+                                            cmi_docx.declarative.Paragraph(
+                                                text="Row 1 Col 1"
+                                            )
+                                        ]
+                                    ),
+                                    cmi_docx.declarative.TableCell(
+                                        children=[
+                                            cmi_docx.declarative.Paragraph(
+                                                text="Row 1 Col 2"
+                                            )
+                                        ]
+                                    ),
                                 ],
                             ),
                         ],
@@ -47,15 +64,19 @@ def test_simple_table() -> None:
 
 def test_table_with_style() -> None:
     """Test creating a table with styling."""
-    doc = Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
-            Section(
+            cmi_docx.declarative.Section(
                 children=[
-                    Table(
+                    cmi_docx.declarative.Table(
                         rows=[
-                            TableRow(
+                            cmi_docx.declarative.TableRow(
                                 children=[
-                                    TableCell(children=[Paragraph(text="Data")]),
+                                    cmi_docx.declarative.TableCell(
+                                        children=[
+                                            cmi_docx.declarative.Paragraph(text="Data")
+                                        ]
+                                    ),
                                 ],
                             ),
                         ],

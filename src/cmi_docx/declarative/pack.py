@@ -2,24 +2,16 @@
 
 import io
 import pathlib
-from typing import TYPE_CHECKING
 
 import docx
-from docx import document
+from docx import api as docx_api
 from docx.enum import text as docx_text
-from docx.enum.section import WD_ORIENTATION
-from docx.shared import Pt, RGBColor
 
-from cmi_docx import declarative
-
-if TYPE_CHECKING:
-    from cmi_docx.declarative.image import ImageRun
-    from cmi_docx.declarative.paragraph import Paragraph, TextRun
-    from cmi_docx.declarative.section import Footer, Header, Section
-    from cmi_docx.declarative.table import Table, TableCell, TableRow
+import cmi_docx
+from cmi_docx.declarative import document, section
 
 
-def pack(doc: declarative.Document) -> document.Document:
+def pack(doc: document.Document) -> docx_api.Document:
     """Convert a declarative Document into a python-docx Document.
 
     Args:
@@ -49,7 +41,7 @@ def pack(doc: declarative.Document) -> document.Document:
     return docx_doc
 
 
-def _pack_section(docx_doc: "DocxDocument", section: "Section") -> None:
+def _pack_section(docx_doc: document.Document, section: section.Section) -> None:
     """Pack a Section into a python-docx document.
 
     Args:
@@ -86,9 +78,9 @@ def _pack_section(docx_doc: "DocxDocument", section: "Section") -> None:
 
         if props.page_orientation:
             if props.page_orientation.lower() == "landscape":
-                docx_section.orientation = WD_ORIENTATION.LANDSCAPE
+                docx_section.orientation = docx.enum.section.WD_ORIENTATION.LANDSCAPE
             elif props.page_orientation.lower() == "portrait":
-                docx_section.orientation = WD_ORIENTATION.PORTRAIT
+                docx_section.orientation = docx.enum.section.WD_ORIENTATION.PORTRAIT
 
     if section.headers:
         for header_type, header in section.headers.items():
@@ -121,7 +113,7 @@ def _get_header_or_footer(docx_section: "DocxSection", hf_type: str, is_header: 
 
 
 def _pack_header(
-    docx_section: "DocxSection", header_type: str, header: "Header"
+    docx_section: "DocxSection", header_type: str, header: declarative.Header
 ) -> None:
     """Pack a Header into a python-docx section.
 
@@ -159,12 +151,15 @@ def _pack_block_element(container, element: "Paragraph | Table") -> None:
         container: The container to add to (Document, Header, Footer, or Cell).
         element: The Paragraph or Table to pack.
     """
-    from cmi_docx.declarative.paragraph import Paragraph
-    from cmi_docx.declarative.table import Table
+    import cmi_docx.declarative
 
-    if isinstance(element, Paragraph):
+    if isinstance(
+        element, cmi_docx.declarative.paragraph.Paragraphdeclarative.paragraph.Paragraph
+    ):
         _pack_paragraph(container, element)
-    elif isinstance(element, Table):
+    elif isinstance(
+        element, cmi_docx.declarative.table.Tableocx.declarative.table.Table
+    ):
         _pack_table(container, element)
 
 
@@ -200,17 +195,17 @@ def _pack_paragraph(container, para: "Paragraph") -> None:
 
     fmt = docx_para.paragraph_format
     if para.spacing_before:
-        fmt.space_before = Pt(para.spacing_before)
+        fmt.space_before = docx.shared.Pt(para.spacing_before)
     if para.spacing_after:
-        fmt.space_after = Pt(para.spacing_after)
+        fmt.space_after = docx.shared.Pt(para.spacing_after)
     if para.line_spacing:
         fmt.line_spacing = para.line_spacing
     if para.left_indent:
-        fmt.left_indent = Pt(para.left_indent)
+        fmt.left_indent = docx.shared.Pt(para.left_indent)
     if para.right_indent:
-        fmt.right_indent = Pt(para.right_indent)
+        fmt.right_indent = docx.shared.Pt(para.right_indent)
     if para.first_line_indent:
-        fmt.first_line_indent = Pt(para.first_line_indent)
+        fmt.first_line_indent = docx.shared.Pt(para.first_line_indent)
     if para.keep_together is not None:
         fmt.keep_together = para.keep_together
     if para.keep_with_next is not None:
@@ -234,16 +229,19 @@ def _pack_inline_element(docx_para: "DocxParagraph", element) -> None:
         docx_para: The python-docx Paragraph.
         element: The inline element to pack.
     """
-    from cmi_docx.declarative.image import ImageRun
-    from cmi_docx.declarative.paragraph import Break, Tab, TextRun
+    import cmi_docx.declarative
 
-    if isinstance(element, TextRun):
+    if isinstance(
+        element, cmi_docx.declarative.paragraph.TextRunx.declarative.paragraph.TextRun
+    ):
         _pack_text_run(docx_para, element)
-    elif isinstance(element, ImageRun):
+    elif isinstance(
+        element, cmi_docx.declarative.image.ImageRun.declarative.image.ImageRun
+    ):
         _pack_image_run(docx_para, element)
-    elif isinstance(element, Tab):
+    elif isinstance(element, cmi_docx.declarative.paragraph.Tab):
         docx_para.add_run().add_tab()
-    elif isinstance(element, Break):
+    elif isinstance(element, cmi_docx.declarative.paragraph.Break):
         break_type_mapping = {
             "page": docx_text.WD_BREAK.PAGE,
             "column": docx_text.WD_BREAK.COLUMN,
@@ -275,9 +273,9 @@ def _pack_text_run(docx_para: "DocxParagraph", run: "TextRun") -> None:
     if run.font:
         font.name = run.font
     if run.size:
-        font.size = Pt(run.size)
+        font.size = docx.shared.Pt(run.size)
     if run.color:
-        font.color.rgb = RGBColor(*run.color)
+        font.color.rgb = docx.shared.RGBColor(*run.color)
     if run.superscript:
         font.superscript = True
     if run.subscript:
@@ -303,16 +301,30 @@ def _pack_image_run(docx_para: "DocxParagraph", image: "ImageRun") -> None:
 
     width = None
     height = None
-    if image.transformation:
-        if "width" in image.transformation:
-            width = Pt(image.transformation["width"])
-        if "height" in image.transformation:
-            height = Pt(image.transformation["height"])
+    if cmi_docx.declarative.imageocx.declarative.image.transformation:
+        if "width" in cmi_docx.declarative.imageocx.declarative.image.transformation:
+            width = docx.shared.Pt(
+                cmi_docx.declarative.imageocx.declarative.image.transformation["width"]
+            )
+        if "height" in cmi_docx.declarative.imageocx.declarative.image.transformation:
+            height = docx.shared.Pt(
+                cmi_docx.declarative.imageocx.declarative.image.transformation["height"]
+            )
 
-    if isinstance(image.data, bytes):
-        docx_run.add_picture(io.BytesIO(image.data), width=width, height=height)
-    elif isinstance(image.data, (str, pathlib.Path)):
-        docx_run.add_picture(str(image.data), width=width, height=height)
+    if isinstance(cmi_docx.declarative.imageocx.declarative.image.data, bytes):
+        docx_run.add_picture(
+            io.BytesIO(cmi_docx.declarative.imageocx.declarative.image.data),
+            width=width,
+            height=height,
+        )
+    elif isinstance(
+        cmi_docx.declarative.imageocx.declarative.image.data, (str, pathlib.Path)
+    ):
+        docx_run.add_picture(
+            str(cmi_docx.declarative.imageocx.declarative.image.data),
+            width=width,
+            height=height,
+        )
 
 
 def _pack_table(container, table: "Table") -> None:
@@ -322,15 +334,22 @@ def _pack_table(container, table: "Table") -> None:
         container: The container to add to.
         table: The declarative Table.
     """
-    num_rows = len(table.rows)
-    num_cols = max(len(row.children) for row in table.rows) if table.rows else 0
+    num_rows = len(cmi_docx.declarative.tableocx.declarative.table.rows)
+    num_cols = (
+        max(
+            len(row.children)
+            for row in cmi_docx.declarative.tableocx.declarative.table.rows
+        )
+        if cmi_docx.declarative.tableocx.declarative.table.rows
+        else 0
+    )
 
     docx_table = container.add_table(rows=num_rows, cols=num_cols)
 
-    if table.style:
-        docx_table.style = table.style
+    if cmi_docx.declarative.tableocx.declarative.table.style:
+        docx_table.style = cmi_docx.declarative.tableocx.declarative.table.style
 
-    for row_idx, row in enumerate(table.rows):
+    for row_idx, row in enumerate(cmi_docx.declarative.tableocx.declarative.table.rows):
         _pack_table_row(docx_table.rows[row_idx], row)
 
 

@@ -5,13 +5,13 @@ from collections.abc import Awaitable, Coroutine
 
 from docx.enum import text as docx_text
 
-from cmi_docx import declarative
+import cmi_docx
 
 InlineElement = "TextRun | declarative.ImageRun | Tab | Break"
 
 
 @dataclasses.dataclass
-class TextRun(declarative.Component):
+class TextRun(cmi_docx.declarative.Component):
     """A run of text with formatting.
 
     Attributes:
@@ -46,12 +46,12 @@ class TextRun(declarative.Component):
 
 
 @dataclasses.dataclass
-class Tab(declarative.Component):
+class Tab(cmi_docx.declarative.Component):
     """A tab character."""
 
 
 @dataclasses.dataclass
-class Break(declarative.Component):
+class Break(cmi_docx.declarative.Component):
     """A line or page break.
 
     Attributes:
@@ -62,7 +62,7 @@ class Break(declarative.Component):
 
 
 @dataclasses.dataclass
-class Paragraph(declarative.Component):
+class Paragraph(cmi_docx.declarative.Component):
     """A paragraph with optional formatting and child runs.
 
     Attributes:
@@ -88,10 +88,12 @@ class Paragraph(declarative.Component):
     children: (
         list[
             TextRun
-            | declarative.ImageRun
+            | cmi_docx.declarative.ImageRun
             | Tab
             | Break
-            | Coroutine[None, None, TextRun | declarative.ImageRun | Tab | Break]
+            | Coroutine[
+                None, None, TextRun | cmi_docx.declarative.ImageRun | Tab | Break
+            ]
         ]
         | None
     ) = None
