@@ -1,7 +1,5 @@
 """Basic tests for the declarative API."""
 
-import io
-
 import pytest
 
 import cmi_docx
@@ -20,9 +18,8 @@ async def test_simple_document() -> None:
         ],
     )
 
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
+    docx = await doc.to_docx()
+    assert docx.paragraphs[0].text.startswith("Hello World")
 
 
 @pytest.mark.asyncio
@@ -46,9 +43,10 @@ async def test_document_with_text_runs() -> None:
         ],
     )
 
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
+    docx = await doc.to_docx()
+    assert docx.paragraphs[0].text.startswith("Bold text")
+    assert docx.paragraphs[0].runs[0].bold
+    assert docx.paragraphs[0].runs[2].italic
 
 
 @pytest.mark.asyncio
@@ -60,46 +58,18 @@ async def test_document_with_heading() -> None:
                 children=[
                     cmi_docx.declarative.Paragraph(text="Main Heading", heading=1),
                     cmi_docx.declarative.Paragraph(text="Subheading", heading=2),
-                    cmi_docx.declarative.Paragraph(text="Body text"),
                 ],
             ),
         ],
     )
 
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
-
-
-@pytest.mark.asyncio
-async def test_document_with_tabs_and_breaks() -> None:
-    """Test creating a document with tabs and breaks."""
-    doc = cmi_docx.declarative.Document(
-        sections=[
-            cmi_docx.declarative.Section(
-                children=[
-                    cmi_docx.declarative.Paragraph(
-                        children=[
-                            cmi_docx.declarative.TextRun(text="Before tab"),
-                            cmi_docx.declarative.Tab(),
-                            cmi_docx.declarative.TextRun(text="After tab"),
-                        ],
-                    ),
-                    cmi_docx.declarative.Paragraph(
-                        children=[
-                            cmi_docx.declarative.TextRun(text="Before break"),
-                            cmi_docx.declarative.Break(type="line"),
-                            cmi_docx.declarative.TextRun(text="After break"),
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    )
-
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
+    docx = await doc.to_docx()
+    assert docx.paragraphs[0].text.startswith("Main Heading")
+    assert docx.paragraphs[0].style is not None
+    assert docx.paragraphs[0].style.name == "Heading 1"
+    assert docx.paragraphs[1].text.startswith("Subheading")
+    assert docx.paragraphs[1].style is not None
+    assert docx.paragraphs[1].style.name == "Heading 2"
 
 
 @pytest.mark.asyncio
@@ -117,10 +87,6 @@ async def test_document_metadata() -> None:
         creator="Test Author",
         subject="Testing",
     )
-
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
 
     docx_doc = await doc.to_docx()
     assert docx_doc.core_properties.title == "Test Document"

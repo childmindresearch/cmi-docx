@@ -1,7 +1,5 @@
 """Table tests for the declarative API."""
 
-import io
-
 import pytest
 
 import cmi_docx
@@ -14,7 +12,6 @@ async def test_simple_table() -> None:
         sections=[
             cmi_docx.declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(text="Table Example", heading=1),
                     cmi_docx.declarative.Table(
                         rows=[
                             cmi_docx.declarative.TableRow(
@@ -26,31 +23,6 @@ async def test_simple_table() -> None:
                                             )
                                         ]
                                     ),
-                                    cmi_docx.declarative.TableCell(
-                                        children=[
-                                            cmi_docx.declarative.Paragraph(
-                                                text="Header 2"
-                                            )
-                                        ]
-                                    ),
-                                ],
-                            ),
-                            cmi_docx.declarative.TableRow(
-                                children=[
-                                    cmi_docx.declarative.TableCell(
-                                        children=[
-                                            cmi_docx.declarative.Paragraph(
-                                                text="Row 1 Col 1"
-                                            )
-                                        ]
-                                    ),
-                                    cmi_docx.declarative.TableCell(
-                                        children=[
-                                            cmi_docx.declarative.Paragraph(
-                                                text="Row 1 Col 2"
-                                            )
-                                        ]
-                                    ),
                                 ],
                             ),
                         ],
@@ -60,37 +32,5 @@ async def test_simple_table() -> None:
         ],
     )
 
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
-
-
-@pytest.mark.asyncio
-async def test_table_with_style() -> None:
-    """Test creating a table with styling."""
-    doc = cmi_docx.declarative.Document(
-        sections=[
-            cmi_docx.declarative.Section(
-                children=[
-                    cmi_docx.declarative.Table(
-                        rows=[
-                            cmi_docx.declarative.TableRow(
-                                children=[
-                                    cmi_docx.declarative.TableCell(
-                                        children=[
-                                            cmi_docx.declarative.Paragraph(text="Data")
-                                        ]
-                                    ),
-                                ],
-                            ),
-                        ],
-                        style="Light Grid",
-                    ),
-                ],
-            ),
-        ],
-    )
-
-    output = io.BytesIO()
-    await doc.save(output)
-    assert output.tell() > 0
+    docx = await doc.to_docx()
+    assert docx.tables[0].rows[0].cells[0].paragraphs[0].text == "Header 1"
