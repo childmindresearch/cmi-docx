@@ -4,29 +4,29 @@ import asyncio
 
 import pytest
 
-import cmi_docx
+from cmi_docx import declarative
 
 
-async def fetch_paragraph() -> cmi_docx.declarative.Paragraph:
+async def fetch_paragraph() -> declarative.Paragraph:
     """Simulate fetching a paragraph asynchronously."""
     await asyncio.sleep(0.01)
-    return cmi_docx.declarative.Paragraph(text="Async paragraph")
+    return declarative.Paragraph(text="Async paragraph")
 
 
-async def fetch_text_run() -> cmi_docx.declarative.TextRun:
+async def fetch_text_run() -> declarative.TextRun:
     """Simulate fetching a text run asynchronously."""
     await asyncio.sleep(0.01)
-    return cmi_docx.declarative.TextRun(text="async text", bold=True)
+    return declarative.TextRun(text="async text", bold=True)
 
 
 @pytest.mark.asyncio
 async def test_async_paragraph() -> None:
     """Test creating a document with async paragraphs."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(text="Sync paragraph"),
+                    declarative.Paragraph(text="Sync paragraph"),
                     fetch_paragraph(),
                 ],
             ),
@@ -41,13 +41,13 @@ async def test_async_paragraph() -> None:
 @pytest.mark.asyncio
 async def test_async_text_run() -> None:
     """Test creating a document with async text runs."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(
+                    declarative.Paragraph(
                         children=[
-                            cmi_docx.declarative.TextRun(text="Sync text"),
+                            declarative.TextRun(text="Sync text"),
                             fetch_text_run(),
                         ],
                     ),

@@ -2,17 +2,17 @@
 
 import pytest
 
-import cmi_docx
+from cmi_docx import declarative
 
 
 @pytest.mark.asyncio
 async def test_simple_document() -> None:
     """Test creating a simple document with text."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(text="Hello World"),
+                    declarative.Paragraph(text="Hello World"),
                 ],
             ),
         ],
@@ -25,17 +25,15 @@ async def test_simple_document() -> None:
 @pytest.mark.asyncio
 async def test_document_with_text_runs() -> None:
     """Test creating a document with formatted text runs."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(
+                    declarative.Paragraph(
                         children=[
-                            cmi_docx.declarative.TextRun(text="Bold text", bold=True),
-                            cmi_docx.declarative.TextRun(text=" and "),
-                            cmi_docx.declarative.TextRun(
-                                text="italic text", italic=True
-                            ),
+                            declarative.TextRun(text="Bold text", bold=True),
+                            declarative.TextRun(text=" and "),
+                            declarative.TextRun(text="italic text", italic=True),
                         ],
                     ),
                 ],
@@ -52,12 +50,12 @@ async def test_document_with_text_runs() -> None:
 @pytest.mark.asyncio
 async def test_document_with_heading() -> None:
     """Test creating a document with headings."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(text="Main Heading", heading=1),
-                    cmi_docx.declarative.Paragraph(text="Subheading", heading=2),
+                    declarative.Paragraph(text="Main Heading", heading=1),
+                    declarative.Paragraph(text="Subheading", heading=2),
                 ],
             ),
         ],
@@ -75,11 +73,11 @@ async def test_document_with_heading() -> None:
 @pytest.mark.asyncio
 async def test_document_metadata() -> None:
     """Test creating a document with metadata."""
-    doc = cmi_docx.declarative.Document(
+    doc = declarative.Document(
         sections=[
-            cmi_docx.declarative.Section(
+            declarative.Section(
                 children=[
-                    cmi_docx.declarative.Paragraph(text="Content"),
+                    declarative.Paragraph(text="Content"),
                 ],
             ),
         ],
