@@ -23,6 +23,9 @@ class TextRun(base.Component):
 
     Attributes:
         text: The text content.
+        comment_text: Text content for a Word comment attached to this run.
+        comment_author: Author name for the comment. Overrides the
+            document-level default.
         bold: Apply bold formatting.
         italic: Apply italic formatting.
         underline: Apply underline formatting.
@@ -38,6 +41,7 @@ class TextRun(base.Component):
 
     text: Awaitable[str] | str
     comment_text: Awaitable[str] | str | None = None
+    comment_author: Awaitable[str] | str | None = None
     bold: bool | None = None
     italic: bool | None = None
     underline: bool | None = None
@@ -73,6 +77,9 @@ class Paragraph(base.Component):
 
     Attributes:
         text: Shorthand for a paragraph with a single text run.
+        comment_text: Text content for a Word comment attached to this paragraph.
+        comment_author: Author name for the comment. Overrides the
+            document-level default.
         children: List of TextRun, ImageRun, Tab, Break, or coroutines
             that resolve to these types.
         heading: Heading level.
@@ -92,6 +99,7 @@ class Paragraph(base.Component):
 
     text: Awaitable[str] | str | None = None
     comment_text: Awaitable[str] | str | None = None
+    comment_author: Awaitable[str] | str | None = None
     children: (
         list[
             TextRun

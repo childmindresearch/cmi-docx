@@ -2,7 +2,7 @@
 
 import asyncio
 import dataclasses
-from collections.abc import Awaitable, Generator
+from collections.abc import Awaitable, Callable, Generator
 from typing import Any, Self
 
 
@@ -47,7 +47,14 @@ class Component:
 
     All components are async. Use `await Document(...)` to resolve all
     async children concurrently.
+
+    Attributes:
+        condition: If Callable resolves to False, will not render the component.
     """
+
+    condition: Callable[[], bool] = dataclasses.field(
+        default=lambda: True, kw_only=True
+    )
 
     def __await__(self) -> Generator[None, None, Self]:
         """Convenience method for awaiting a component."""
@@ -59,6 +66,9 @@ class Component:
         Returns:
             Self with all coroutines replaced by their resolved values.
         """
+        if not self.condition():
+            return self
+
         tasks = _collect_resolve_tasks(self)
 
         if tasks:

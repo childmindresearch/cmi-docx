@@ -22,7 +22,7 @@ async def fetch_text_run() -> cmi_docx.declarative.TextRun:
 @pytest.mark.asyncio
 async def test_async_paragraph() -> None:
     """Test creating a document with async paragraphs."""
-    doc = await cmi_docx.declarative.Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
             cmi_docx.declarative.Section(
                 children=[
@@ -41,7 +41,7 @@ async def test_async_paragraph() -> None:
 @pytest.mark.asyncio
 async def test_async_text_run() -> None:
     """Test creating a document with async text runs."""
-    doc = await cmi_docx.declarative.Document(
+    doc = cmi_docx.declarative.Document(
         sections=[
             cmi_docx.declarative.Section(
                 children=[

@@ -1,5 +1,6 @@
 """Top-level Document class for declarative API."""
 
+import asyncio
 import dataclasses
 import io
 import pathlib
@@ -13,8 +14,9 @@ from docx.enum import section as docx_enum_section
 from docx.enum import text as docx_text
 from docx.text import paragraph as docx_paragraph
 
+from cmi_docx import comment as cmi_comment
 from cmi_docx import document as imperative_document
-from cmi_docx.declarative import base, image, paragraph, section, table
+from cmi_docx.declarative import image, paragraph, section, table
 
 
 @dataclasses.dataclass
@@ -30,8 +32,7 @@ class DocumentTemplate:
     replacements: dict[str, str] | None = None
 
 
-@dataclasses.dataclass
-class Document(base.Component):
+class Document:
     """A Word document with sections.
 
     This is the top-level container for a declarative document. All operations
@@ -46,6 +47,8 @@ class Document(base.Component):
         keywords: Document keywords metadata.
         category: Document category metadata.
         comments: Document comments metadata.
+        comment_author: Default author name for all Word comments. Can be overridden
+            per-paragraph or per-text-run.
         styles: Document-level style definitions.
         numbering: Document-level numbering definitions.
 
@@ -60,16 +63,31 @@ class Document(base.Component):
         ...     await doc.save("output.docx")
     """
 
-    sections: list[section.Section]
-    creator: str | None = None
-    title: str | None = None
-    subject: str | None = None
-    description: str | None = None
-    keywords: str | None = None
-    category: str | None = None
-    comments: str | None = None
-    styles: dict[str, str | int | bool] | None = None
-    numbering: dict[str, str | int | list[dict[str, str | int]]] | None = None
+    def __init__(  # noqa: PLR0913, D107
+        self,
+        sections: list[section.Section],
+        creator: str | None = None,
+        title: str | None = None,
+        subject: str | None = None,
+        description: str | None = None,
+        keywords: str | None = None,
+        category: str | None = None,
+        comments: str | None = None,
+        comment_author: str | None = None,
+        styles: dict[str, str | int | bool] | None = None,
+        numbering: dict[str, str | int | list[dict[str, str | int]]] | None = None,
+    ) -> None:
+        self.sections = sections
+        self.creator = creator
+        self.title = title
+        self.subject = subject
+        self.description = description
+        self.keywords = keywords
+        self.category = category
+        self.comments = comments
+        self.comment_author = comment_author
+        self.styles = styles
+        self.numbering = numbering
 
     async def to_docx(  # noqa: C901
         self, template: DocumentTemplate | None = None
@@ -81,7 +99,7 @@ class Document(base.Component):
         Returns:
             A python-docx Document object.
         """
-        await self.resolve()
+        await asyncio.gather(*(sec.resolve() for sec in self.sections))
         if template is not None:
             docx_doc = docx.Document()
             if template.replacements is not None:
@@ -109,21 +127,29 @@ class Document(base.Component):
             docx_doc.core_properties.category = self.category
 
         for sec in self.sections:
-            _pack_section(docx_doc, sec)
+            _pack_section(docx_doc, sec, self.comment_author)
 
         return docx_doc
 
 
-def _pack_section(docx_doc: docx_document.Document, sec: section.Section) -> None:  # noqa: C901, PLR0912
+def _pack_section(  # noqa: C901, PLR0912
+    docx_doc: docx_document.Document,
+    sec: section.Section,
+    default_comment_author: str | None,
+) -> None:
     """Pack a Section into a python-docx document.
 
     Args:
         docx_doc: The python-docx Document.
         sec: The declarative Section.
+        default_comment_author: Default author for comments.
     """
+    if not sec.condition():
+        return
+
     if sec.children:
         for child in sec.children:
-            _pack_block_element(docx_doc, child)  # ty:ignore[invalid-argument-type] already awaited.
+            _pack_block_element(docx_doc, docx_doc, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
     docx_section = docx_doc.add_section()
 
@@ -143,11 +169,15 @@ def _pack_section(docx_doc: docx_document.Document, sec: section.Section) -> Non
 
     if sec.headers:
         for header_type, header in sec.headers.items():
-            _pack_header(docx_section, header_type, header)
+            _pack_header(
+                docx_doc, docx_section, header_type, header, default_comment_author
+            )
 
     if sec.footers:
         for footer_type, footer in sec.footers.items():
-            _pack_footer(docx_section, footer_type, footer)
+            _pack_footer(
+                docx_doc, docx_section, footer_type, footer, default_comment_author
+            )
 
 
 def _get_header_or_footer(
@@ -174,73 +204,108 @@ def _get_header_or_footer(
 
 
 def _pack_header(
-    section: docx_section.Section, header_type: str, header: section.Header
+    docx_doc: docx_document.Document,
+    section: docx_section.Section,
+    header_type: str,
+    header: section.Header,
+    default_comment_author: str | None,
 ) -> None:
     """Pack a Header into a python-docx section.
 
     Args:
+        docx_doc: The python-docx Document.
         section: The python-docx Section.
         header_type: The header type ('default', 'first', 'even').
         header: The declarative Header.
+        default_comment_author: Default author for comments.
     """
+    if not header.condition():
+        return
+
     docx_header = _get_header_or_footer(section, header_type, is_header=True)
     if docx_header and header.children:
         for child in header.children:
-            _pack_block_element(docx_header, child)  # ty:ignore[invalid-argument-type] already awaited.
+            _pack_block_element(docx_doc, docx_header, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
 def _pack_footer(
-    section: docx_section.Section, footer_type: str, footer: section.Footer
+    docx_doc: docx_document.Document,
+    section: docx_section.Section,
+    footer_type: str,
+    footer: section.Footer,
+    default_comment_author: str | None,
 ) -> None:
     """Pack a Footer into a python-docx section.
 
     Args:
+        docx_doc: The python-docx Document.
         section: The python-docx Section.
         footer_type: The footer type ('default', 'first', 'even').
         footer: The declarative Footer.
+        default_comment_author: Default author for comments.
     """
+    if not footer.condition():
+        return
+
     docx_footer = _get_header_or_footer(section, footer_type, is_header=False)
     if docx_footer and footer.children:
         for child in footer.children:
-            _pack_block_element(docx_footer, child)  # ty:ignore[invalid-argument-type] already awaited.
+            _pack_block_element(docx_doc, docx_footer, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
 def _pack_block_element(
+    docx_doc: docx_document.Document,
     container: docx_document.Document,
     element: paragraph.Paragraph | table.Table,
+    default_comment_author: str | None,
 ) -> None:
     """Pack a block-level element (Paragraph or Table).
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         container: The container to add to.
         element: The Paragraph or Table to pack.
+        default_comment_author: Default author for comments.
     """
+    if not element.condition():
+        return None
+
     if isinstance(element, paragraph.Paragraph):
-        return _pack_paragraph(container, element)
-    return _pack_table(container, element)
+        return _pack_paragraph(docx_doc, container, element, default_comment_author)
+    return _pack_table(docx_doc, container, element, default_comment_author)
 
 
 def _pack_paragraph(
-    container: docx_document.Document, para: paragraph.Paragraph
+    docx_doc: docx_document.Document,
+    container: docx_document.Document,
+    para: paragraph.Paragraph,
+    default_comment_author: str | None,
 ) -> None:
     """Pack a Paragraph into a container.
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         container: The container to add to.
         para: The declarative Paragraph.
+        default_comment_author: Default author for comments.
     """
     docx_para = container.add_paragraph()
-    _pack_paragraph_into_existing(docx_para, para)
+    _pack_paragraph_into_existing(docx_doc, docx_para, para, default_comment_author)
 
 
 def _pack_paragraph_into_existing(  # noqa: C901, PLR0912
-    docx_para: docx_paragraph.Paragraph, para: paragraph.Paragraph
+    docx_doc: docx_document.Document,
+    docx_para: docx_paragraph.Paragraph,
+    para: paragraph.Paragraph,
+    default_comment_author: str | None,
 ) -> None:
     """Pack a Paragraph into an existing python-docx paragraph.
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         docx_para: The python-docx Paragraph to populate.
         para: The declarative Paragraph.
+        default_comment_author: Default author for comments.
     """
     if para.style:
         docx_para.style = para.style
@@ -277,21 +342,32 @@ def _pack_paragraph_into_existing(  # noqa: C901, PLR0912
         docx_para.add_run(para.text)  # ty:ignore[invalid-argument-type] Text is already awaited.
     elif para.children:
         for child in para.children:
-            _pack_inline_element(docx_para, child)  # ty:ignore[invalid-argument-type] already awaited.
+            _pack_inline_element(docx_doc, docx_para, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
+
+    if para.comment_text:
+        author = para.comment_author or default_comment_author or ""
+        docx_doc.add_comment(runs=docx_para.runs, text=para.comment_text, author=author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
 def _pack_inline_element(
+    docx_doc: docx_document.Document,
     para: docx_paragraph.Paragraph,
     element: paragraph.TextRun | image.ImageRun | paragraph.Tab | paragraph.Break,
+    default_comment_author: str | None,
 ) -> None:
     """Pack an inline element (TextRun, ImageRun, Tab, Break).
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         para: The python-docx Paragraph.
         element: The inline element to pack.
+        default_comment_author: Default author for comments.
     """
+    if not element.condition():
+        return
+
     if isinstance(element, paragraph.TextRun):
-        _pack_text_run(para, element)
+        _pack_text_run(docx_doc, para, element, default_comment_author)
     elif isinstance(element, image.ImageRun):
         _pack_image_run(para, element)
     elif isinstance(element, paragraph.Tab):
@@ -308,12 +384,19 @@ def _pack_inline_element(
             para.add_run().add_break()
 
 
-def _pack_text_run(para: docx_paragraph.Paragraph, run: paragraph.TextRun) -> None:  # noqa: C901
+def _pack_text_run(  # noqa: C901
+    docx_doc: docx_document.Document,
+    para: docx_paragraph.Paragraph,
+    run: paragraph.TextRun,
+    default_comment_author: str | None,
+) -> None:
     """Pack a TextRun into a paragraph.
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         para: The python-docx Paragraph.
         run: The declarative TextRun.
+        default_comment_author: Default author for comments.
     """
     docx_run = para.add_run(run.text)  # ty:ignore[invalid-argument-type] Already awaited.
 
@@ -341,6 +424,10 @@ def _pack_text_run(para: docx_paragraph.Paragraph, run: paragraph.TextRun) -> No
         font.all_caps = True
     if run.small_caps:
         font.small_caps = True
+
+    if run.comment_text:
+        author = run.comment_author or default_comment_author or ""
+        cmi_comment.add_comment(docx_doc, docx_run, author, run.comment_text)  # ty:ignore[invalid-argument-type] already awaited.
 
 
 def _pack_image_run(para: docx_paragraph.Paragraph, img: image.ImageRun) -> None:
@@ -374,47 +461,86 @@ def _pack_image_run(para: docx_paragraph.Paragraph, img: image.ImageRun) -> None
         )
 
 
-def _pack_table(container: docx_document.Document, tbl: table.Table) -> None:
+def _pack_table(
+    docx_doc: docx_document.Document,
+    container: docx_document.Document,
+    tbl: table.Table,
+    default_comment_author: str | None,
+) -> None:
     """Pack a Table into a container.
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         container: The container to add to.
         tbl: The declarative Table.
+        default_comment_author: Default author for comments.
     """
-    num_rows = len(tbl.rows)
-    num_cols = max(len(row.children) for row in tbl.rows) if tbl.rows else 0  # ty:ignore[unresolved-attribute] already awaited.
+    filtered_rows = [row for row in tbl.rows if row.condition()]  # ty:ignore[unresolved-attribute] already awaited.
+    if not filtered_rows:
+        return
+
+    num_rows = len(filtered_rows)
+    num_cols = (
+        max(
+            len([cell for cell in row.children if cell.condition()])  # ty:ignore[unresolved-attribute] already awaited.
+            for row in filtered_rows
+        )
+        if filtered_rows
+        else 0
+    )
 
     docx_table = container.add_table(rows=num_rows, cols=num_cols)
 
     if tbl.style:
         docx_table.style = tbl.style
 
-    for row_idx, row in enumerate(tbl.rows):
-        _pack_table_row(docx_table.rows[row_idx], row)  # ty:ignore[invalid-argument-type] already awaited.
+    for row_idx, row in enumerate(filtered_rows):
+        _pack_table_row(docx_doc, docx_table.rows[row_idx], row, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
-def _pack_table_row(docx_row: docx_table._Row, row: table.TableRow) -> None:
+def _pack_table_row(
+    docx_doc: docx_document.Document,
+    docx_row: docx_table._Row,
+    row: table.TableRow,
+    default_comment_author: str | None,
+) -> None:
     """Pack a TableRow.
 
     Args:
+        docx_doc: The python-docx Document.
         docx_row: The python-docx table row.
         row: The declarative TableRow.
+        default_comment_author: Default author for comments.
     """
-    for cell_idx, cell in enumerate(row.children):
-        _pack_table_cell(docx_row.cells[cell_idx], cell)  # ty:ignore[invalid-argument-type] Cell already awaited.
+    filtered_cells = [cell for cell in row.children if cell.condition()]  # ty:ignore[unresolved-attribute] already awaited.
+    for cell_idx, cell in enumerate(filtered_cells):
+        _pack_table_cell(
+            docx_doc,
+            docx_row.cells[cell_idx],
+            cell,  # ty:ignore[invalid-argument-type] Cell already awaited.
+            default_comment_author,
+        )
 
 
-def _pack_table_cell(docx_cell: docx_table._Cell, cell: table.TableCell) -> None:
+def _pack_table_cell(
+    docx_doc: docx_document.Document,
+    docx_cell: docx_table._Cell,
+    cell: table.TableCell,
+    default_comment_author: str | None,
+) -> None:
     """Pack a TableCell.
 
     Args:
+        docx_doc: The python-docx Document (needed for comment API).
         docx_cell: The python-docx table cell.
         cell: The declarative TableCell.
+        default_comment_author: Default author for comments.
     """
     if cell.children:
         for idx, child in enumerate(cell.children):
             if idx == 0 and isinstance(child, paragraph.Paragraph):
-                # An empty paragraph is created at instantiation of a cell.
-                _pack_paragraph_into_existing(docx_cell.paragraphs[0], child)
+                _pack_paragraph_into_existing(
+                    docx_doc, docx_cell.paragraphs[0], child, default_comment_author
+                )
             else:
-                _pack_block_element(docx_cell, child)  # ty:ignore[invalid-argument-type] already awaited.
+                _pack_block_element(docx_doc, docx_cell, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
