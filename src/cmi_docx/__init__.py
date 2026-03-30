@@ -2,6 +2,7 @@
 
 # sergey: disable-file: IMP001 # Allow importing non-modules for barrel export.
 
+from cmi_docx import declarative  # noqa: F401
 from cmi_docx.comment import add_comment  # noqa: F401
 from cmi_docx.document import ExtendDocument  # noqa: F401
 from cmi_docx.paragraph import ExtendParagraph, FindParagraph  # noqa: F401
