@@ -14,7 +14,6 @@ from docx.enum import section as docx_enum_section
 from docx.enum import text as docx_text
 from docx.text import paragraph as docx_paragraph
 
-from cmi_docx import comment as cmi_comment
 from cmi_docx import document as imperative_document
 from cmi_docx.declarative import image, paragraph, section, table
 
@@ -427,7 +426,7 @@ def _pack_text_run(  # noqa: C901
 
     if run.comment_text:
         author = run.comment_author or default_comment_author or ""
-        cmi_comment.add_comment(docx_doc, docx_run, author, run.comment_text)  # ty:ignore[invalid-argument-type] already awaited.
+        docx_doc.add_comment(runs=docx_run, text=run.comment_text, author=author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
 def _pack_image_run(para: docx_paragraph.Paragraph, img: image.ImageRun) -> None:
