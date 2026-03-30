@@ -220,7 +220,7 @@ def _pack_block_element(
     return _pack_table(container, element)
 
 
-def _pack_paragraph(  # noqa: C901, PLR0912
+def _pack_paragraph(
     container: docx_document.Document, para: paragraph.Paragraph
 ) -> None:
     """Pack a Paragraph into a container.
@@ -230,7 +230,18 @@ def _pack_paragraph(  # noqa: C901, PLR0912
         para: The declarative Paragraph.
     """
     docx_para = container.add_paragraph()
+    _pack_paragraph_into_existing(docx_para, para)
 
+
+def _pack_paragraph_into_existing(  # noqa: C901, PLR0912
+    docx_para: docx_paragraph.Paragraph, para: paragraph.Paragraph
+) -> None:
+    """Pack a Paragraph into an existing python-docx paragraph.
+
+    Args:
+        docx_para: The python-docx Paragraph to populate.
+        para: The declarative Paragraph.
+    """
     if para.style:
         docx_para.style = para.style
 
@@ -401,6 +412,9 @@ def _pack_table_cell(docx_cell: docx_table._Cell, cell: table.TableCell) -> None
         cell: The declarative TableCell.
     """
     if cell.children:
-        docx_cell.text = ""
-        for child in cell.children:
-            _pack_block_element(docx_cell, child)  # ty:ignore[invalid-argument-type] already awaited.
+        for idx, child in enumerate(cell.children):
+            if idx == 0 and isinstance(child, paragraph.Paragraph):
+                # An empty paragraph is created at instantiation of a cell.
+                _pack_paragraph_into_existing(docx_cell.paragraphs[0], child)
+            else:
+                _pack_block_element(docx_cell, child)  # ty:ignore[invalid-argument-type] already awaited.
