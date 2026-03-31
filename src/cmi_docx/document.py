@@ -124,14 +124,30 @@ class ExtendDocument:
 
     @property
     def all_paragraphs(self) -> list[docx_paragraph.Paragraph]:
-        """Returns all paragraphs in the document, including headers and footers."""
+        """Returns all paragraphs including headers, footers, and tables."""
         all_paragraphs = list(self.document.paragraphs)
 
         for section in self.document.sections:
             all_paragraphs.extend(
                 (*section.footer.paragraphs, *section.header.paragraphs)
             )
+
+        all_paragraphs.extend(self._get_table_paragraphs(self.document.tables))
+
+        for section in self.document.sections:
+            all_paragraphs.extend(self._get_table_paragraphs(section.header.tables))
+            all_paragraphs.extend(self._get_table_paragraphs(section.footer.tables))
+
         return all_paragraphs
+
+    def _get_table_paragraphs(self, tables: list) -> list[docx_paragraph.Paragraph]:
+        """Extract all paragraphs from a list of tables."""
+        paragraphs = []
+        for table in tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    paragraphs.extend(cell.paragraphs)
+        return paragraphs
 
     def _insert_empty_paragraph(
         self, index: int, style: str | None = None

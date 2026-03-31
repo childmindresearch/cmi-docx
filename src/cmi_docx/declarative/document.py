@@ -88,7 +88,7 @@ class Document:
         self.styles = styles
         self.numbering = numbering
 
-    async def to_docx(  # noqa: C901
+    async def to_docx(
         self, template: DocumentTemplate | None = None
     ) -> docx_document.Document:
         """Convert to a python-docx Document.
@@ -99,18 +99,15 @@ class Document:
             A python-docx Document object.
         """
         await asyncio.gather(*(sec.resolve() for sec in self.sections))
-        if template is not None:
-            docx_doc = docx.Document()
-            if template.replacements is not None:
-                extended_doc = imperative_document.ExtendDocument(docx_doc)
-                for needle, replacement in template.replacements.items():
-                    extended_doc.replace(needle, replacement)
-        else:
-            docx_doc = (
-                docx.Document()
-                if template is None
-                else docx.Document(str(template.path))
-            )
+
+        docx_doc = (
+            docx.Document() if template is None else docx.Document(str(template.path))
+        )
+
+        if template is not None and template.replacements is not None:
+            extended_doc = imperative_document.ExtendDocument(docx_doc)
+            for needle, replacement in template.replacements.items():
+                extended_doc.replace(needle, replacement)
 
         if self.creator:
             docx_doc.core_properties.author = self.creator
