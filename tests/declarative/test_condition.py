@@ -26,7 +26,7 @@ async def test_section_condition_false() -> None:
 
     docx = await doc.to_docx()
     assert len(docx.sections) == 2  # noqa: PLR2004
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 1
     assert content_paragraphs[0].text.startswith("Visible section")
 
@@ -49,7 +49,7 @@ async def test_paragraph_condition_false() -> None:
     )
 
     docx = await doc.to_docx()
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 2  # noqa: PLR2004
     assert content_paragraphs[0].text.startswith("First paragraph")
     assert content_paragraphs[1].text.startswith("Third paragraph")
@@ -207,7 +207,7 @@ async def test_table_condition_false() -> None:
 
     docx = await doc.to_docx()
     assert len(docx.tables) == 0
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 2  # noqa: PLR2004
     assert content_paragraphs[0].text.startswith("Before table")
     assert content_paragraphs[1].text.startswith("After table")
@@ -233,6 +233,6 @@ async def test_nested_condition_false() -> None:
     )
 
     docx = await doc.to_docx()
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 1
     assert content_paragraphs[0].text.startswith("Visible")

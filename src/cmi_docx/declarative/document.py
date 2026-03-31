@@ -25,10 +25,15 @@ class DocumentTemplate:
     Attributes:
         path: Path to the document file.
         replacements: Dictionary of needle/replacements to make in the template.
+        paragraph_index: Paragraph index in the template at which to insert
+            user-defined section content. If None, content is appended to the end.
+            The index refers to the paragraph position in the original template
+            (before any insertions).
     """
 
     path: pathlib.Path | str
     replacements: dict[str, str] | None = None
+    paragraph_index: int | None = None
 
 
 class Document:
@@ -122,8 +127,18 @@ class Document:
         if self.category:
             docx_doc.core_properties.category = self.category
 
+        paragraph_index = template.paragraph_index if template is not None else None
+        insertion_offset = 0
         for sec in self.sections:
-            _pack_section(docx_doc, sec, self.comment_author)
+            current_index = (
+                (paragraph_index + insertion_offset)
+                if paragraph_index is not None
+                else None
+            )
+            elements_inserted = _pack_section(
+                docx_doc, sec, self.comment_author, current_index
+            )
+            insertion_offset += elements_inserted
 
         return docx_doc
 
@@ -132,20 +147,40 @@ def _pack_section(  # noqa: C901, PLR0912
     docx_doc: docx_document.Document,
     sec: section.Section,
     default_comment_author: str | None,
-) -> None:
+    paragraph_index: int | None = None,
+) -> int:
     """Pack a Section into a python-docx document.
 
     Args:
         docx_doc: The python-docx Document.
         sec: The declarative Section.
         default_comment_author: Default author for comments.
+        paragraph_index: If provided, insert children starting at this paragraph
+            index instead of appending.
+
+    Returns:
+        The number of block elements inserted (for offset tracking).
     """
     if not sec.condition():
-        return
+        return 0
 
+    paragraphs_inserted = 0
     if sec.children:
         for child in sec.children:
-            _pack_block_element(docx_doc, docx_doc, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
+            current_index = (
+                (paragraph_index + paragraphs_inserted)
+                if paragraph_index is not None
+                else None
+            )
+            _pack_block_element(
+                docx_doc,
+                docx_doc,
+                child,  # ty:ignore[invalid-argument-type] already awaited.
+                default_comment_author,
+                current_index,
+            )
+            if child.condition() and isinstance(child, paragraph.Paragraph):  # ty:ignore[unresolved-attribute] already awaited.
+                paragraphs_inserted += 1
 
     docx_section = docx_doc.add_section()
 
@@ -174,6 +209,8 @@ def _pack_section(  # noqa: C901, PLR0912
             _pack_footer(
                 docx_doc, docx_section, footer_type, footer, default_comment_author
             )
+
+    return paragraphs_inserted
 
 
 def _get_header_or_footer(
@@ -254,6 +291,7 @@ def _pack_block_element(
     container: docx_document.Document,
     element: paragraph.Paragraph | table.Table,
     default_comment_author: str | None,
+    insert_index: int | None = None,
 ) -> None:
     """Pack a block-level element (Paragraph or Table).
 
@@ -262,13 +300,19 @@ def _pack_block_element(
         container: The container to add to.
         element: The Paragraph or Table to pack.
         default_comment_author: Default author for comments.
+        insert_index: If provided, insert at this paragraph index in docx_doc
+            instead of appending.
     """
     if not element.condition():
         return None
 
     if isinstance(element, paragraph.Paragraph):
-        return _pack_paragraph(docx_doc, container, element, default_comment_author)
-    return _pack_table(docx_doc, container, element, default_comment_author)
+        return _pack_paragraph(
+            docx_doc, container, element, default_comment_author, insert_index
+        )
+    return _pack_table(
+        docx_doc, container, element, default_comment_author, insert_index
+    )
 
 
 def _pack_paragraph(
@@ -276,6 +320,7 @@ def _pack_paragraph(
     container: docx_document.Document,
     para: paragraph.Paragraph,
     default_comment_author: str | None,
+    insert_index: int | None = None,
 ) -> None:
     """Pack a Paragraph into a container.
 
@@ -284,8 +329,17 @@ def _pack_paragraph(
         container: The container to add to.
         para: The declarative Paragraph.
         default_comment_author: Default author for comments.
+        insert_index: If provided, insert at this paragraph index in docx_doc
+            instead of appending.
     """
-    docx_para = container.add_paragraph()
+    if insert_index is not None:
+        n_paragraphs = len(docx_doc.paragraphs)
+        if insert_index >= n_paragraphs:
+            docx_para = container.add_paragraph()
+        else:
+            docx_para = docx_doc.paragraphs[insert_index]._insert_paragraph_before()  # noqa: SLF001
+    else:
+        docx_para = container.add_paragraph()
     _pack_paragraph_into_existing(docx_doc, docx_para, para, default_comment_author)
 
 
@@ -462,6 +516,7 @@ def _pack_table(
     container: docx_document.Document,
     tbl: table.Table,
     default_comment_author: str | None,
+    insert_index: int | None = None,
 ) -> None:
     """Pack a Table into a container.
 
@@ -470,6 +525,8 @@ def _pack_table(
         container: The container to add to.
         tbl: The declarative Table.
         default_comment_author: Default author for comments.
+        insert_index: If provided, insert the table before this paragraph index
+            in docx_doc instead of appending.
     """
     filtered_rows = [row for row in tbl.rows if row.condition()]  # ty:ignore[unresolved-attribute] already awaited.
     if not filtered_rows:
@@ -486,6 +543,12 @@ def _pack_table(
     )
 
     docx_table = container.add_table(rows=num_rows, cols=num_cols)
+
+    if insert_index is not None:
+        n_paragraphs = len(docx_doc.paragraphs)
+        if insert_index < n_paragraphs:
+            target_element = docx_doc.paragraphs[insert_index]._element  # noqa: SLF001
+            target_element.addprevious(docx_table._tbl)  # noqa: SLF001
 
     if tbl.style:
         docx_table.style = tbl.style
