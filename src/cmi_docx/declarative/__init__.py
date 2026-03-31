@@ -3,7 +3,7 @@
 # sergey: disable-file: IMP001 # Allow barrel exports.
 
 from cmi_docx.declarative.base import Component
-from cmi_docx.declarative.document import Document
+from cmi_docx.declarative.document import Document, DocumentTemplate
 from cmi_docx.declarative.image import ImageRun
 from cmi_docx.declarative.paragraph import Break, Paragraph, Tab, TextRun
 from cmi_docx.declarative.section import Footer, Header, Section, SectionProperties
@@ -13,6 +13,7 @@ __all__ = [
     "Break",
     "Component",
     "Document",
+    "DocumentTemplate",
     "Footer",
     "Header",
     "ImageRun",
