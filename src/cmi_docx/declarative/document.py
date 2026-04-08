@@ -103,7 +103,7 @@ class Document:
         Returns:
             A python-docx Document object.
         """
-        await asyncio.gather(*(sec.resolve() for sec in self.sections))
+        await asyncio.gather(*(section.resolve() for section in self.sections))
 
         docx_doc = (
             docx.Document() if template is None else docx.Document(str(template.path))
@@ -166,7 +166,7 @@ def _pack_section(  # noqa: C901, PLR0912
 
     paragraphs_inserted = 0
     if sec.children:
-        for child in sec.children:
+        for child in sec.children:  # ty:ignore[not-iterable] callables have been resolved.
             current_index = (
                 (paragraph_index + paragraphs_inserted)
                 if paragraph_index is not None
@@ -257,7 +257,7 @@ def _pack_header(
 
     docx_header = _get_header_or_footer(section, header_type, is_header=True)
     if docx_header and header.children:
-        for child in header.children:
+        for child in header.children:  # ty:ignore[not-iterable] callables have been resolved.
             _pack_block_element(docx_doc, docx_header, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
@@ -282,7 +282,7 @@ def _pack_footer(
 
     docx_footer = _get_header_or_footer(section, footer_type, is_header=False)
     if docx_footer and footer.children:
-        for child in footer.children:
+        for child in footer.children:  # ty:ignore[not-iterable] callables have been resolved.
             _pack_block_element(docx_doc, docx_footer, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
 
@@ -391,7 +391,7 @@ def _pack_paragraph_into_existing(  # noqa: C901, PLR0912
     if para.text:
         docx_para.add_run(para.text)  # ty:ignore[invalid-argument-type] Text is already awaited.
     elif para.children:
-        for child in para.children:
+        for child in para.children:  # ty:ignore[not-iterable] callables have been resolved.
             _pack_inline_element(docx_doc, docx_para, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
 
     if para.comment_text:
@@ -528,14 +528,15 @@ def _pack_table(
         insert_index: If provided, insert the table before this paragraph index
             in docx_doc instead of appending.
     """
-    filtered_rows = [row for row in tbl.rows if row.condition()]  # ty:ignore[unresolved-attribute] already awaited.
+    filtered_rows = [row for row in tbl.rows if row.condition()]  # ty:ignore[unresolved-attribute] already awaited. # ty:ignore[not-iterable] callables have been resolved.
+
     if not filtered_rows:
         return
 
     num_rows = len(filtered_rows)
     num_cols = (
         max(
-            len([cell for cell in row.children if cell.condition()])  # ty:ignore[unresolved-attribute] already awaited.
+            len([cell for cell in row.children if cell.condition()])  # ty:ignore[unresolved-attribute] already awaited.# ty:ignore[not-iterable] callables have been resolved.
             for row in filtered_rows
         )
         if filtered_rows
@@ -571,7 +572,7 @@ def _pack_table_row(
         row: The declarative TableRow.
         default_comment_author: Default author for comments.
     """
-    filtered_cells = [cell for cell in row.children if cell.condition()]  # ty:ignore[unresolved-attribute] already awaited.
+    filtered_cells = [cell for cell in row.children if cell.condition()]  # ty:ignore[unresolved-attribute] already awaited. # ty:ignore[not-iterable] callables have been resolved.
     for cell_idx, cell in enumerate(filtered_cells):
         _pack_table_cell(
             docx_doc,
@@ -596,7 +597,7 @@ def _pack_table_cell(
         default_comment_author: Default author for comments.
     """
     if cell.children:
-        for idx, child in enumerate(cell.children):
+        for idx, child in enumerate(cell.children):  # ty:ignore[invalid-argument-type] callables have been resolved.
             if idx == 0 and isinstance(child, paragraph.Paragraph):
                 _pack_paragraph_into_existing(
                     docx_doc, docx_cell.paragraphs[0], child, default_comment_author

@@ -1,12 +1,17 @@
 """Section, header, and footer components for declarative documents."""
 
 import dataclasses
-from collections.abc import Coroutine
+from collections.abc import Callable, Coroutine, Sequence
 from typing import Literal
 
 from cmi_docx.declarative import base, paragraph, table
 
 type BlockElement = paragraph.Paragraph | table.Table
+type BlockChildren = Sequence[
+    paragraph.Paragraph
+    | table.Table
+    | Coroutine[None, None, paragraph.Paragraph | table.Table]
+]
 type HeaderFooterType = Literal["default", "first", "even"]
 
 
@@ -42,17 +47,11 @@ class Header(base.Component):
 
     Attributes:
         children: List of Paragraph or Table components, or coroutines that
-            resolve to these types.
+            resolve to these types. May be a zero-argument callable for lazy
+            evaluation (useful with ``condition``).
     """
 
-    children: (
-        list[
-            paragraph.Paragraph
-            | table.Table
-            | Coroutine[None, None, paragraph.Paragraph | table.Table]
-        ]
-        | None
-    ) = None
+    children: BlockChildren | Callable[[], BlockChildren] | None = None
 
 
 @dataclasses.dataclass
@@ -61,17 +60,11 @@ class Footer(base.Component):
 
     Attributes:
         children: List of Paragraph or Table components, or coroutines that
-            resolve to these types.
+            resolve to these types. May be a zero-argument callable for lazy
+            evaluation (useful with ``condition``).
     """
 
-    children: (
-        list[
-            paragraph.Paragraph
-            | table.Table
-            | Coroutine[None, None, paragraph.Paragraph | table.Table]
-        ]
-        | None
-    ) = None
+    children: BlockChildren | Callable[[], BlockChildren] | None = None
 
 
 @dataclasses.dataclass
@@ -80,7 +73,8 @@ class Section(base.Component):
 
     Attributes:
         children: List of Paragraph or Table components, or coroutines that
-            resolve to these types.
+            resolve to these types. May be a zero-argument callable for lazy
+            evaluation (useful with ``condition``).
         properties: Section configuration.
         headers: Dictionary mapping header types ('default', 'first', 'even')
             to Header components.
@@ -88,14 +82,7 @@ class Section(base.Component):
             to Footer components.
     """
 
-    children: (
-        list[
-            paragraph.Paragraph
-            | table.Table
-            | Coroutine[None, None, paragraph.Paragraph | table.Table]
-        ]
-        | None
-    ) = None
+    children: BlockChildren | Callable[[], BlockChildren] | None = None
     properties: SectionProperties | None = None
     headers: dict[HeaderFooterType, Header] | None = None
     footers: dict[HeaderFooterType, Footer] | None = None
