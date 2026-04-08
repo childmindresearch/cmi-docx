@@ -262,7 +262,7 @@ async def test_lazy_section_children_not_called_when_condition_false() -> None:
 
     docx = await doc.to_docx()
     assert not called
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 1
     assert content_paragraphs[0].text.startswith("Visible section")
 
@@ -288,6 +288,6 @@ async def test_lazy_section_children_called_when_condition_true() -> None:
 
     docx = await doc.to_docx()
     assert called
-    content_paragraphs = [p for p in docx.paragraphs if p.text.strip()]
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 1
     assert content_paragraphs[0].text.startswith("Lazy paragraph")
