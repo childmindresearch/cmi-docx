@@ -1,24 +1,21 @@
 [project]
 name = "cmi-docx"
-version = "0.5.1"
+version = "0.6.0"
 description = "Additional tooling for Python-docx."
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "lxml>=6.0.2",
-    "python-docx>=1.1.2",
-]
+dependencies = ["lxml>=6.0.2", "python-docx>=1.1.2"]
 
 [dependency-groups]
 dev = [
-  "pytest>=8.3.4",
-  "pytest-cov>=6.0.0",
-  "pdoc>=15.0.1",
-  "ty>=0.0.25",
-  "prek>=0.3.8",
-  "ruff>=0.15.7",
-  "pytest-asyncio>=1.3.0",
-  "sergey-lint>=0.1.3",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pdoc>=15.0.1",
+    "ty>=0.0.25",
+    "prek>=0.3.8",
+    "ruff>=0.15.7",
+    "pytest-asyncio>=1.3.0",
+    "sergey-lint>=0.1.3",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -33,27 +30,27 @@ ignore_missing_imports = true
 
 [tool.ruff]
 exclude = [
-  ".bzr",
-  ".direnv",
-  ".eggs",
-  ".git",
-  ".git-rewrite",
-  ".hg",
-  ".mypy_cache",
-  ".nox",
-  ".pants.d",
-  ".pytype",
-  ".ruff_cache",
-  ".svn",
-  ".tox",
-  ".venv",
-  "__pypackages__",
-  "_build",
-  "buck-out",
-  "build",
-  "dist",
-  "node_modules",
-  "venv"
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
 ]
 line-length = 88
 indent-width = 4
@@ -64,22 +61,22 @@ target-version = "py312"
 preview = false
 select = ["ALL"]
 ignore = [
-  "PYI063",  # Preview rule not correctly ignored.
-  "SIM300",  # Can cause mypy issues in SQLAlchemy where statements.
-  # Recommended ignores by Astral https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules)
-  "W191",  # Tab indentation
-  "E111",  # Indentation with invalid multiple
-  "E114",  # Indentation with invalid multiple comment
-  "E117",  # Over indented
-  "D206",  # Docstring tab indentation
-  "D300",  # Triple single quotes
-  "Q000",  # Bad quotes inline string
-  "Q001",  # Bad quotes multiline string
-  "Q002",  # Bad quotes docstring
-  "Q003",  # Avoidable escaped quote
-  "COM812",  # Missing trailing comma
-  "COM819",  # Prohibited trailing comma
-  "ISC002"  # Multi-line implicit string concatenation
+    "PYI063", # Preview rule not correctly ignored.
+    "SIM300", # Can cause mypy issues in SQLAlchemy where statements.
+    # Recommended ignores by Astral https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules)
+    "W191",   # Tab indentation
+    "E111",   # Indentation with invalid multiple
+    "E114",   # Indentation with invalid multiple comment
+    "E117",   # Over indented
+    "D206",   # Docstring tab indentation
+    "D300",   # Triple single quotes
+    "Q000",   # Bad quotes inline string
+    "Q001",   # Bad quotes multiline string
+    "Q002",   # Bad quotes docstring
+    "Q003",   # Avoidable escaped quote
+    "COM812", # Missing trailing comma
+    "COM819", # Prohibited trailing comma
+    "ISC002", # Multi-line implicit string concatenation
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -90,10 +87,10 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-  "S101",  # asserts should be used in pytest
-  "SLF001",  # accessing private members in tests is fine
-  "INP001",  # tests should not be a module
-  "ARG001"  # tests can have ununsed arguments (fixtures with side-effects)
+    "S101",   # asserts should be used in pytest
+    "SLF001", # accessing private members in tests is fine
+    "INP001", # tests should not be a module
+    "ARG001", # tests can have ununsed arguments (fixtures with side-effects)
 ]
 "local/**/*" = ["ALL"]
 

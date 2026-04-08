@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from cmi_docx.declarative import base, paragraph
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine, Iterable
+    from collections.abc import Callable, Coroutine, Sequence
 
 
 @dataclasses.dataclass
@@ -17,15 +17,24 @@ class TableCell(base.Component):
 
     Attributes:
         children: List of Paragraph or Table components, or coroutines that
-            resolve to these types.
+            resolve to these types. May be a zero-argument callable for lazy
+            evaluation (useful with ``condition``).
         borders: Cell border configuration.
     """
 
     children: (
-        Iterable[
+        Sequence[
             paragraph.Paragraph
             | Table
             | Coroutine[None, None, paragraph.Paragraph | Table]
+        ]
+        | Callable[
+            [],
+            Sequence[
+                paragraph.Paragraph
+                | Table
+                | Coroutine[None, None, paragraph.Paragraph | Table]
+            ],
         ]
         | None
     ) = None
@@ -37,10 +46,15 @@ class TableRow(base.Component):
     """A table row containing cells.
 
     Attributes:
-        children: List of TableCell components or coroutines that resolve to cells.
+        children: List of TableCell components or coroutines that resolve to
+            cells. May be a zero-argument callable for lazy evaluation (useful
+            with ``condition``).
     """
 
-    children: list[TableCell | Coroutine[None, None, TableCell]]
+    children: (
+        Sequence[TableCell | Coroutine[None, None, TableCell]]
+        | Callable[[], Sequence[TableCell | Coroutine[None, None, TableCell]]]
+    )
 
 
 @dataclasses.dataclass
@@ -49,6 +63,8 @@ class Table(base.Component):
 
     Attributes:
         rows: List of TableRow components or coroutines that resolve to rows.
+            May be a zero-argument callable for lazy evaluation (useful with
+            ``condition``).
         column_widths: List of column widths in DXA units.
         width: Table width configuration (dict with 'size' and 'type' keys).
         borders: Table border configuration.
@@ -58,7 +74,10 @@ class Table(base.Component):
         style: Table style name.
     """
 
-    rows: list[TableRow | Coroutine[None, None, TableRow]]
+    rows: (
+        Sequence[TableRow | Coroutine[None, None, TableRow]]
+        | Callable[[], Sequence[TableRow | Coroutine[None, None, TableRow]]]
+    )
     column_widths: list[int] | None = None
     width: dict[str, int | str] | None = None
     borders: dict[str, dict[str, str | int]] | None = None

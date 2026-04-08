@@ -236,3 +236,58 @@ async def test_nested_condition_false() -> None:
     content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
     assert len(content_paragraphs) == 1
     assert content_paragraphs[0].text.startswith("Visible")
+
+
+@pytest.mark.asyncio
+async def test_lazy_section_children_not_called_when_condition_false() -> None:
+    """Lazy children callable must not be invoked when condition is False."""
+    called = False
+
+    def build_children() -> list[declarative.Paragraph]:
+        nonlocal called
+        called = True
+        return [declarative.Paragraph(text="Should not be built")]
+
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=build_children,
+                condition=lambda: False,
+            ),
+            declarative.Section(
+                children=[declarative.Paragraph(text="Visible section")],
+            ),
+        ],
+    )
+
+    docx = await doc.to_docx()
+    assert not called
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
+    assert len(content_paragraphs) == 1
+    assert content_paragraphs[0].text.startswith("Visible section")
+
+
+@pytest.mark.asyncio
+async def test_lazy_section_children_called_when_condition_true() -> None:
+    """Lazy children callable is invoked and renders when condition is True."""
+    called = False
+
+    def build_children() -> list[declarative.Paragraph]:
+        nonlocal called
+        called = True
+        return [declarative.Paragraph(text="Lazy paragraph")]
+
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=build_children,
+                condition=lambda: True,
+            ),
+        ],
+    )
+
+    docx = await doc.to_docx()
+    assert called
+    content_paragraphs = [para for para in docx.paragraphs if para.text.strip()]
+    assert len(content_paragraphs) == 1
+    assert content_paragraphs[0].text.startswith("Lazy paragraph")

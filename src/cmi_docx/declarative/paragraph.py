@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from cmi_docx.declarative import base
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Coroutine
+    from collections.abc import Awaitable, Callable, Coroutine
 
     from docx.enum import text as docx_text
 
@@ -16,13 +17,22 @@ if TYPE_CHECKING:
 
 InlineElement = "TextRun | image.ImageRun | Tab | Break"
 
+type InlineChildren = Sequence[
+    TextRun
+    | image.ImageRun
+    | Tab
+    | Break
+    | Coroutine[None, None, TextRun | image.ImageRun | Tab | Break]
+]
+
 
 @dataclasses.dataclass
 class TextRun(base.Component):
     """A run of text with formatting.
 
     Attributes:
-        text: The text content.
+        text: The text content. May be a zero-argument callable for lazy
+            evaluation (useful with ``condition``).
         comment_text: Text content for a Word comment attached to this run.
         comment_author: Author name for the comment. Overrides the
             document-level default.
@@ -39,7 +49,7 @@ class TextRun(base.Component):
         small_caps: Apply small caps formatting.
     """
 
-    text: Awaitable[str] | str
+    text: Awaitable[str] | Callable[[], Awaitable[str] | str] | str
     comment_text: Awaitable[str] | str | None = None
     comment_author: Awaitable[str] | str | None = None
     bold: bool | None = None
@@ -76,12 +86,15 @@ class Paragraph(base.Component):
     """A paragraph with optional formatting and child runs.
 
     Attributes:
-        text: Shorthand for a paragraph with a single text run.
+        text: Shorthand for a paragraph with a single text run. May be a
+            zero-argument callable for lazy evaluation (useful with
+            ``condition``).
         comment_text: Text content for a Word comment attached to this paragraph.
         comment_author: Author name for the comment. Overrides the
             document-level default.
         children: List of TextRun, ImageRun, Tab, Break, or coroutines
-            that resolve to these types.
+            that resolve to these types. May be a zero-argument callable for
+            lazy evaluation (useful with ``condition``).
         heading: Heading level.
         style: Style name to apply.
         alignment: Paragraph alignment.
@@ -97,19 +110,10 @@ class Paragraph(base.Component):
         widow_control: Enable widow/orphan control.
     """
 
-    text: Awaitable[str] | str | None = None
+    text: Awaitable[str] | Callable[[], Awaitable[str] | str] | str | None = None
     comment_text: Awaitable[str] | str | None = None
     comment_author: Awaitable[str] | str | None = None
-    children: (
-        list[
-            TextRun
-            | image.ImageRun
-            | Tab
-            | Break
-            | Coroutine[None, None, TextRun | image.ImageRun | Tab | Break]
-        ]
-        | None
-    ) = None
+    children: InlineChildren | Callable[[], InlineChildren] | None = None
     heading: int | None = None
     style: str | None = None
     alignment: docx_text.WD_PARAGRAPH_ALIGNMENT | None = None

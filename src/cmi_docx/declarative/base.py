@@ -13,6 +13,29 @@ class _ResolveTask:
     awaitable: Awaitable[Any]
 
 
+def _materialize_lazy_fields(component: "Component") -> None:
+    """Materialize any callable (lazy) field values on a component.
+
+    Fields whose value is callable (but not a Component, coroutine, or future)
+    are replaced with the result of calling them. This allows children to be
+    passed as ``lambda: [...]`` so their construction is deferred until
+    resolution time.
+
+    Args:
+        component: The component whose fields should be materialized.
+    """
+    for field in dataclasses.fields(component):
+        value = getattr(component, field.name)
+        if (
+            callable(value)
+            and not isinstance(value, Component)
+            and not asyncio.iscoroutine(value)
+            and not asyncio.isfuture(value)
+            and field.name != "condition"
+        ):
+            setattr(component, field.name, value())
+
+
 def _collect_resolve_tasks(component: "Component") -> list[_ResolveTask]:
     """Collect all async resolution tasks from a component's fields.
 
@@ -64,10 +87,13 @@ class Component:
         """Recursively resolve all async children concurrently.
 
         Returns:
-            Self with all coroutines replaced by their resolved values.
+            Self with all coroutines replaced by their resolved values
+                and callables materialized.
         """
         if not self.condition():
             return self
+
+        _materialize_lazy_fields(self)
 
         tasks = _collect_resolve_tasks(self)
 
