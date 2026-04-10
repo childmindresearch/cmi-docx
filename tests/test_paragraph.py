@@ -182,3 +182,16 @@ def test_replace_between_multiple_runs() -> None:
     assert para.runs[0].text == "Thi"
     assert para.runs[1].text == "nk sm"
     assert para.runs[2].text == "arta!"
+
+
+def test_replace_between_end_run() -> None:
+    """Test replacing the last run."""
+    document = docx.Document()
+    para = document.add_paragraph("This ")
+    para.add_run("is")
+    para.add_run(" Sparta!")
+    extend_paragraph = paragraph.ExtendParagraph(para)
+
+    extend_paragraph.replace_between(8, 16, "Athens!")
+
+    assert para.text == "This is Athens!"
