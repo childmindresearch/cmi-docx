@@ -140,7 +140,10 @@ class ExtendParagraph:
             )
         )
         start_run_index = bisect.bisect_right(cumulative_run_lengths, start) - 1
-        end_run_index = bisect.bisect_right(cumulative_run_lengths, end) - 1
+        end_run_index = min(
+            bisect.bisect_right(cumulative_run_lengths, end) - 1,
+            len(self.paragraph.runs) - 1,
+        )
 
         for index in range(start_run_index + 1, end_run_index):
             self.paragraph.runs[index].text = ""
