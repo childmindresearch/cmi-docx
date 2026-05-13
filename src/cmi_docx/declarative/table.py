@@ -9,6 +9,7 @@ from cmi_docx.declarative import base, paragraph
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine, Sequence
+    from typing import Literal
 
 
 @dataclasses.dataclass
@@ -20,6 +21,11 @@ class TableCell(base.Component):
             resolve to these types. May be a zero-argument callable for lazy
             evaluation (useful with ``condition``).
         borders: Cell border configuration.
+        grid_span: Number of columns this cell spans (horizontal merge).
+            Defaults to None (no spanning).
+        vmerge: Vertical merge role. ``"restart"`` marks the top cell of a
+            vertical merge group; ``"continue"`` marks subsequent cells in the
+            group. Defaults to None.
     """
 
     children: (
@@ -39,6 +45,8 @@ class TableCell(base.Component):
         | None
     ) = None
     borders: dict[str, dict[str, str | int]] | None = None
+    grid_span: int | None = None
+    vmerge: Literal["restart", "continue"] | None = None
 
 
 @dataclasses.dataclass

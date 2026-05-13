@@ -12,6 +12,8 @@ from docx import shared
 from docx import table as docx_table
 from docx.enum import section as docx_enum_section
 from docx.enum import text as docx_text
+from docx.oxml.ns import qn
+from docx.oxml.simpletypes import ST_Merge
 from docx.text import paragraph as docx_paragraph
 
 from cmi_docx import document as imperative_document
@@ -536,7 +538,11 @@ def _pack_table(
     num_rows = len(filtered_rows)
     num_cols = (
         max(
-            len([cell for cell in row.children if cell.condition()])  # ty:ignore[unresolved-attribute] already awaited.# ty:ignore[not-iterable] callables have been resolved.
+            sum(
+                (cell.grid_span or 1)  # ty:ignore[unresolved-attribute] already awaited.
+                for cell in row.children  # ty:ignore[not-iterable, unresolved-attribute] callables have been resolved.
+                if cell.condition()  # ty:ignore[unresolved-attribute] already awaited.
+            )
             for row in filtered_rows
         )
         if filtered_rows
@@ -573,13 +579,17 @@ def _pack_table_row(
         default_comment_author: Default author for comments.
     """
     filtered_cells = [cell for cell in row.children if cell.condition()]  # ty:ignore[unresolved-attribute] already awaited. # ty:ignore[not-iterable] callables have been resolved.
-    for cell_idx, cell in enumerate(filtered_cells):
+    physical_tcs = docx_row._tr.findall(qn("w:tc"))  # noqa: SLF001
+    col_offset = 0
+    for cell in filtered_cells:
+        docx_cell = docx_table._Cell(physical_tcs[col_offset], docx_row.table)  # noqa: SLF001
         _pack_table_cell(
             docx_doc,
-            docx_row.cells[cell_idx],
+            docx_cell,
             cell,  # ty:ignore[invalid-argument-type] Cell already awaited.
             default_comment_author,
         )
+        col_offset += cell.grid_span or 1  # ty:ignore[unresolved-attribute] already awaited.
 
 
 def _pack_table_cell(
@@ -604,3 +614,17 @@ def _pack_table_cell(
                 )
             else:
                 _pack_block_element(docx_doc, docx_cell, child, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
+
+    if cell.grid_span is not None and cell.grid_span > 1:
+        tc = docx_cell._tc  # noqa: SLF001
+        tc.grid_span = cell.grid_span
+        tr = tc.getparent()
+        tcs = tr.findall(qn("w:tc"))
+        tc_index = tcs.index(tc)
+        for surplus_tc in tcs[tc_index + 1 : tc_index + cell.grid_span]:
+            tr.remove(surplus_tc)
+
+    if cell.vmerge is not None:
+        docx_cell._tc.vMerge = (  # noqa: SLF001
+            ST_Merge.RESTART if cell.vmerge == "restart" else ST_Merge.CONTINUE
+        )
