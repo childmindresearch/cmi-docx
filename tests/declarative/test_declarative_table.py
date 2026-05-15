@@ -1,6 +1,7 @@
 """Table tests for the declarative API."""
 
 import pytest
+from docx import shared
 from docx.oxml.ns import qn
 from docx.oxml.simpletypes import ST_Merge
 
@@ -249,3 +250,209 @@ async def test_horizontal_merge_removes_surplus_tc() -> None:
     tbl = docx_doc.tables[0]
     row_tcs = tbl._tbl.findall(qn("w:tr"))[0].findall(qn("w:tc"))
     assert len(row_tcs) == 2  # noqa: PLR2004
+
+
+@pytest.mark.asyncio
+async def test_table_column_widths() -> None:
+    """Test that column_widths sets autofit=False and each column width in twips.
+
+    A 1-row, 3-column table with column_widths=[1440, 2880, 1440] should disable
+    autofit and set each column to the corresponding width in DXA/twip units.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="A")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="B")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="C")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                        column_widths=[1440, 2880, 1440],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    docx_table = docx_doc.tables[0]
+
+    assert docx_table.autofit is False
+    assert docx_table.columns[0].width == shared.Twips(1440)
+    assert docx_table.columns[1].width == shared.Twips(2880)
+    assert docx_table.columns[2].width == shared.Twips(1440)
+
+
+@pytest.mark.asyncio
+async def test_table_column_widths_with_grid_span() -> None:
+    """Test that column_widths works correctly with a grid_span cell.
+
+    Row 0 has a cell spanning 2 columns and one normal cell (3 logical columns).
+    Row 1 has three normal cells. column_widths=[1440, 1440, 1440] should apply
+    to all 3 grid columns and autofit should be disabled.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Wide")],
+                                        grid_span=2,
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Right")],
+                                    ),
+                                ],
+                            ),
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="A")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="B")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="C")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                        column_widths=[1440, 1440, 1440],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    tbl = docx_doc.tables[0]
+
+    assert len(tbl.columns) == 3  # noqa: PLR2004
+    assert tbl.autofit is False
+    assert tbl.columns[0].width == shared.Twips(1440)
+    assert tbl.columns[1].width == shared.Twips(1440)
+    assert tbl.columns[2].width == shared.Twips(1440)
+
+
+@pytest.mark.asyncio
+async def test_table_column_widths_mismatch_raises() -> None:
+    """Test that a column_widths list of wrong length raises ValueError.
+
+    A table with 1 column but column_widths=[1440, 2880] (2 entries) should
+    raise ValueError when the document is rendered.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Only")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                        column_widths=[1440, 2880],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="column_widths length"):
+        await doc.to_docx()
+
+
+@pytest.mark.asyncio
+async def test_table_layout_fixed() -> None:
+    """Test that layout="fixed" disables autofit without setting column widths.
+
+    A table with layout="fixed" and no column_widths should have autofit=False.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Cell")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                        layout="fixed",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    docx_table = docx_doc.tables[0]
+
+    assert docx_table.autofit is False
+
+
+@pytest.mark.asyncio
+async def test_table_layout_autofit_overrides_column_widths() -> None:
+    """Test that layout="autofit" overrides column_widths and keeps autofit=True.
+
+    A table with both column_widths and layout="autofit" should have autofit
+    enabled and the column widths should NOT be applied.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="A")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="B")],
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="C")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                        column_widths=[1440, 1440, 1440],
+                        layout="autofit",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    docx_table = docx_doc.tables[0]
+
+    assert docx_table.autofit is True
+    assert docx_table.columns[0].width != shared.Twips(1440)
