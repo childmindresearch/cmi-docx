@@ -3,6 +3,7 @@
 import pytest
 
 from cmi_docx import declarative
+from cmi_docx.declarative import BlockChildren
 
 
 @pytest.mark.asyncio
@@ -243,7 +244,7 @@ async def test_lazy_section_children_not_called_when_condition_false() -> None:
     """Lazy children callable must not be invoked when condition is False."""
     called = False
 
-    def build_children() -> list[declarative.Paragraph]:
+    def build_children() -> declarative.BlockChildren:
         nonlocal called
         called = True
         return [declarative.Paragraph(text="Should not be built")]
@@ -272,7 +273,7 @@ async def test_lazy_section_children_called_when_condition_true() -> None:
     """Lazy children callable is invoked and renders when condition is True."""
     called = False
 
-    def build_children() -> list[declarative.Paragraph]:
+    def build_children() -> BlockChildren:
         nonlocal called
         called = True
         return [declarative.Paragraph(text="Lazy paragraph")]

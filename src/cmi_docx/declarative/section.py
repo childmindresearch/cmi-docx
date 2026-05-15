@@ -1,13 +1,13 @@
 """Section, header, and footer components for declarative documents."""
 
 import dataclasses
-from collections.abc import Callable, Coroutine, Sequence
+from collections.abc import Callable, Coroutine, MutableSequence
 from typing import Literal
 
 from cmi_docx.declarative import base, paragraph, table
 
 type BlockElement = paragraph.Paragraph | table.Table
-type BlockChildren = Sequence[
+type BlockChildren = MutableSequence[
     paragraph.Paragraph
     | table.Table
     | Coroutine[None, None, paragraph.Paragraph | table.Table]
