@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
 from cmi_docx.declarative import base
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 InlineElement = "TextRun | image.ImageRun | Tab | Break"
 
-type InlineChildren = Sequence[
+type InlineChildren = MutableSequence[
     TextRun
     | image.ImageRun
     | Tab

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from cmi_docx.declarative import base, paragraph
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine, Sequence
+    from collections.abc import Callable, Coroutine, MutableSequence, Sequence
     from typing import Literal
 
 
@@ -29,14 +29,14 @@ class TableCell(base.Component):
     """
 
     children: (
-        Sequence[
+        MutableSequence[
             paragraph.Paragraph
             | Table
             | Coroutine[None, None, paragraph.Paragraph | Table]
         ]
         | Callable[
             [],
-            Sequence[
+            MutableSequence[
                 paragraph.Paragraph
                 | Table
                 | Coroutine[None, None, paragraph.Paragraph | Table]
@@ -60,8 +60,8 @@ class TableRow(base.Component):
     """
 
     children: (
-        Sequence[TableCell | Coroutine[None, None, TableCell]]
-        | Callable[[], Sequence[TableCell | Coroutine[None, None, TableCell]]]
+        MutableSequence[TableCell | Coroutine[None, None, TableCell]]
+        | Callable[[], MutableSequence[TableCell | Coroutine[None, None, TableCell]]]
     )
 
 
@@ -87,10 +87,10 @@ class Table(base.Component):
     """
 
     rows: (
-        Sequence[TableRow | Coroutine[None, None, TableRow]]
-        | Callable[[], Sequence[TableRow | Coroutine[None, None, TableRow]]]
+        MutableSequence[TableRow | Coroutine[None, None, TableRow]]
+        | Callable[[], MutableSequence[TableRow | Coroutine[None, None, TableRow]]]
     )
-    column_widths: list[int] | None = None
+    column_widths: Sequence[int] | None = None
     width: dict[str, int | str] | None = None
     borders: dict[str, dict[str, str | int]] | None = None
     alignment: str | None = None

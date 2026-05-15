@@ -4,6 +4,7 @@ import asyncio
 import dataclasses
 import io
 import pathlib
+from collections.abc import Sequence
 
 import docx
 from docx import document as docx_document
@@ -575,7 +576,7 @@ def _pack_table(
 
 def _apply_column_widths(
     tbl: docx_table.Table,
-    column_widths: list[int],
+    column_widths: Sequence[int],
     num_cols: int,
 ) -> None:
     """Apply fixed column widths to a python-docx table.
