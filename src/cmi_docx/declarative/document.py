@@ -560,8 +560,42 @@ def _pack_table(
     if tbl.style:
         docx_table.style = tbl.style
 
+    if tbl.layout == "autofit":
+        docx_table.autofit = True
+    else:
+        # column_widths or layout="fixed" both imply fixed layout
+        if tbl.layout == "fixed" or tbl.column_widths is not None:
+            docx_table.autofit = False
+        if tbl.column_widths is not None:
+            _apply_column_widths(docx_table, tbl.column_widths, num_cols)
+
     for row_idx, row in enumerate(filtered_rows):
         _pack_table_row(docx_doc, docx_table.rows[row_idx], row, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
+
+
+def _apply_column_widths(
+    tbl: docx_table.Table,
+    column_widths: list[int],
+    num_cols: int,
+) -> None:
+    """Apply fixed column widths to a python-docx table.
+
+    Args:
+        tbl: The python-docx Table to modify.
+        column_widths: List of widths in twips (DXA), one per column.
+        num_cols: Expected number of columns (must match len(column_widths)).
+
+    Raises:
+        ValueError: If len(column_widths) != num_cols.
+    """
+    if len(column_widths) != num_cols:
+        msg = (
+            f"column_widths length ({len(column_widths)}) "
+            f"must match number of columns ({num_cols})"
+        )
+        raise ValueError(msg)
+    for i, width in enumerate(column_widths):
+        tbl.columns[i].width = shared.Twips(width)
 
 
 def _pack_table_row(
