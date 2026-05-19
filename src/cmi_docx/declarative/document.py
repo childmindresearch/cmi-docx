@@ -495,7 +495,6 @@ def _pack_section(  # noqa: C901, PLR0912
                         docx_enum_section.WD_ORIENTATION.PORTRAIT
                     )
             else:
-                # Only page_size provided; apply as given, no orientation change.
                 current_section.page_width = width  # ty:ignore[invalid-assignment]
                 current_section.page_height = height  # ty:ignore[invalid-assignment]
 
