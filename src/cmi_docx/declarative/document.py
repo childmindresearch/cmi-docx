@@ -8,17 +8,22 @@ from collections.abc import Sequence
 
 import docx
 from docx import document as docx_document
+from docx import oxml, shared
 from docx import section as docx_section
-from docx import shared
 from docx import table as docx_table
 from docx.enum import section as docx_enum_section
+from docx.enum import style as docx_style
 from docx.enum import text as docx_text
+from docx.oxml import simpletypes as docx_simpletypes
 from docx.oxml.ns import qn
-from docx.oxml.simpletypes import ST_Merge
 from docx.text import paragraph as docx_paragraph
+from lxml import (
+    etree,  # ty:ignore[unresolved-import] # This does work; not sure why not detected.
+)
 
 from cmi_docx import document as imperative_document
 from cmi_docx.declarative import image, paragraph, section, table
+from cmi_docx.declarative import styles as styles_mod
 
 
 @dataclasses.dataclass
@@ -56,7 +61,7 @@ class Document:
         comments: Document comments metadata.
         comment_author: Default author name for all Word comments. Can be overridden
             per-paragraph or per-text-run.
-        styles: Document-level style definitions.
+        styles: Document-level style definitions to create or modify.
         numbering: Document-level numbering definitions.
 
     Example:
@@ -81,7 +86,10 @@ class Document:
         category: str | None = None,
         comments: str | None = None,
         comment_author: str | None = None,
-        styles: dict[str, str | int | bool] | None = None,
+        styles: (
+            list[styles_mod.ParagraphStyleDefinition | styles_mod.TableStyleDefinition]
+            | None
+        ) = None,
         numbering: dict[str, str | int | list[dict[str, str | int]]] | None = None,
     ) -> None:
         self.sections = sections
@@ -96,7 +104,7 @@ class Document:
         self.styles = styles
         self.numbering = numbering
 
-    async def to_docx(
+    async def to_docx(  # noqa: C901
         self, template: DocumentTemplate | None = None
     ) -> docx_document.Document:
         """Convert to a python-docx Document.
@@ -130,6 +138,9 @@ class Document:
         if self.category:
             docx_doc.core_properties.category = self.category
 
+        if self.styles:
+            _apply_style_definitions(docx_doc, self.styles)
+
         paragraph_index = template.paragraph_index if template is not None else None
         insertion_offset = 0
         for sec in self.sections:
@@ -144,6 +155,259 @@ class Document:
             insertion_offset += elements_inserted
 
         return docx_doc
+
+
+def _apply_style_definitions(
+    docx_doc: docx_document.Document,
+    style_definitions: list[
+        styles_mod.ParagraphStyleDefinition | styles_mod.TableStyleDefinition
+    ],
+) -> None:
+    """Apply a list of style definitions to a python-docx document.
+
+    Iterates over each definition and either creates or modifies the
+    corresponding style in the document.
+
+    Args:
+        docx_doc: The python-docx Document to apply styles to.
+        style_definitions: List of paragraph or table style definitions.
+    """
+    for defn in style_definitions:
+        if isinstance(defn, styles_mod.ParagraphStyleDefinition):
+            _apply_paragraph_style_definition(docx_doc, defn)
+        elif isinstance(defn, styles_mod.TableStyleDefinition):
+            _apply_table_style_definition(docx_doc, defn)
+
+
+def _apply_paragraph_style_definition(  # noqa: C901, PLR0912
+    docx_doc: docx_document.Document,
+    defn: styles_mod.ParagraphStyleDefinition,
+) -> None:
+    """Apply a ParagraphStyleDefinition to a python-docx document.
+
+    Uses a get-or-create pattern: if the style already exists it is modified
+    in place; otherwise a new style is created (with base_style applied).
+
+    Args:
+        docx_doc: The python-docx Document to apply styles to.
+        defn: The paragraph style definition.
+    """
+    try:
+        style = docx_doc.styles[defn.name]
+    except KeyError:
+        style = docx_doc.styles.add_style(defn.name, docx_style.WD_STYLE_TYPE.PARAGRAPH)
+        if defn.base_style:
+            style.base_style = docx_doc.styles[defn.base_style]
+
+    if defn.next_paragraph_style is not None:
+        style.next_paragraph_style = docx_doc.styles[defn.next_paragraph_style]
+
+    font = style.font
+    if defn.font is not None:
+        font.name = defn.font
+    if defn.font_size is not None:
+        font.size = shared.Pt(defn.font_size)
+    if defn.bold is not None:
+        font.bold = defn.bold
+    if defn.italic is not None:
+        font.italic = defn.italic
+    if defn.underline is not None:
+        font.underline = defn.underline
+    if defn.color is not None:
+        font.color.rgb = shared.RGBColor(*defn.color)
+
+    pf = style.paragraph_format
+    if defn.alignment is not None:
+        pf.alignment = defn.alignment
+    if defn.spacing_before is not None:
+        pf.space_before = shared.Pt(defn.spacing_before)
+    if defn.spacing_after is not None:
+        pf.space_after = shared.Pt(defn.spacing_after)
+    if defn.line_spacing is not None:
+        pf.line_spacing = defn.line_spacing
+    if defn.left_indent is not None:
+        pf.left_indent = shared.Inches(defn.left_indent)
+    if defn.right_indent is not None:
+        pf.right_indent = shared.Inches(defn.right_indent)
+    if defn.first_line_indent is not None:
+        pf.first_line_indent = shared.Inches(defn.first_line_indent)
+    if defn.keep_together is not None:
+        pf.keep_together = defn.keep_together
+    if defn.keep_with_next is not None:
+        pf.keep_with_next = defn.keep_with_next
+    if defn.page_break_before is not None:
+        pf.page_break_before = defn.page_break_before
+    if defn.widow_control is not None:
+        pf.widow_control = defn.widow_control
+
+
+def _apply_table_style_definition(  # noqa: C901, PLR0912
+    docx_doc: docx_document.Document,
+    defn: styles_mod.TableStyleDefinition,
+) -> None:
+    """Apply a TableStyleDefinition to a python-docx document.
+
+    Always creates a new table style. Per-section formatting is applied via
+    ``<w:tblStylePr>`` XML elements appended to the style element.
+
+    Args:
+        docx_doc: The python-docx Document to apply styles to.
+        defn: The table style definition.
+    """
+    style = docx_doc.styles.add_style(defn.name, docx_style.WD_STYLE_TYPE.TABLE)
+    if defn.base_style:
+        style.base_style = docx_doc.styles[defn.base_style]
+
+    if defn.whole_table is not None:
+        fmt = defn.whole_table
+        font = style.font
+        if fmt.font is not None:
+            font.name = fmt.font
+        if fmt.font_size is not None:
+            font.size = shared.Pt(fmt.font_size)
+        if fmt.bold is not None:
+            font.bold = fmt.bold
+        if fmt.italic is not None:
+            font.italic = fmt.italic
+        if fmt.underline is not None:
+            font.underline = fmt.underline
+        if fmt.color is not None:
+            font.color.rgb = shared.RGBColor(*fmt.color)
+
+        pf = style.paragraph_format
+        if fmt.alignment is not None:
+            pf.alignment = fmt.alignment
+        if fmt.spacing_before is not None:
+            pf.space_before = shared.Pt(fmt.spacing_before)
+        if fmt.spacing_after is not None:
+            pf.space_after = shared.Pt(fmt.spacing_after)
+
+    _SECTION_TYPE_MAP = {  # noqa: N806
+        "first_row": "firstRow",
+        "last_row": "lastRow",
+        "first_column": "firstCol",
+        "last_column": "lastCol",
+        "banding_1_row": "band1Horz",
+        "banding_2_row": "band2Horz",
+        "banding_1_column": "band1Vert",
+        "banding_2_column": "band2Vert",
+        "top_left_cell": "nwCell",
+        "top_right_cell": "neCell",
+        "bottom_left_cell": "swCell",
+        "bottom_right_cell": "seCell",
+    }
+    for field_name, section_type in _SECTION_TYPE_MAP.items():
+        fmt = getattr(defn, field_name)
+        if fmt is not None:
+            style.element.append(_build_tbl_style_pr(section_type, fmt))
+
+
+def _build_tbl_style_pr(  # noqa: C901, PLR0912, PLR0915
+    section_type: str,
+    fmt: styles_mod.TableSectionFormat,
+) -> etree._Element:  # type: ignore[name-defined]
+    """Build a ``<w:tblStylePr>`` XML element for a table style section.
+
+    Args:
+        section_type: The OOXML ``w:type`` value (e.g. ``"firstRow"``).
+        fmt: The formatting to apply to this section.
+
+    Returns:
+        A ``<w:tblStylePr>`` lxml element ready to be appended to a style.
+    """
+    tbl_style_pr = oxml.OxmlElement("w:tblStylePr")
+    tbl_style_pr.set(qn("w:type"), section_type)
+
+    has_rpr = any(
+        [
+            fmt.font is not None,
+            fmt.font_size is not None,
+            fmt.bold is not None,
+            fmt.italic is not None,
+            fmt.underline is not None,
+            fmt.color,
+        ]
+    )
+    if has_rpr:
+        r_pr = oxml.OxmlElement("w:rPr")
+        if fmt.bold is not None:
+            b = oxml.OxmlElement("w:b")
+            if not fmt.bold:
+                b.set(qn("w:val"), "0")
+            r_pr.append(b)
+        if fmt.italic is not None:
+            i = oxml.OxmlElement("w:i")
+            if not fmt.italic:
+                i.set(qn("w:val"), "0")
+            r_pr.append(i)
+        if fmt.underline is not None:
+            u = oxml.OxmlElement("w:u")
+            u.set(qn("w:val"), "single" if fmt.underline else "none")
+            r_pr.append(u)
+        if fmt.color:
+            color_el = oxml.OxmlElement("w:color")
+            color_el.set(
+                qn("w:val"),
+                f"{fmt.color[0]:02X}{fmt.color[1]:02X}{fmt.color[2]:02X}",
+            )
+            r_pr.append(color_el)
+        if fmt.font is not None:
+            r_fonts = oxml.OxmlElement("w:rFonts")
+            r_fonts.set(qn("w:ascii"), fmt.font)
+            r_fonts.set(qn("w:hAnsi"), fmt.font)
+            r_pr.append(r_fonts)
+        if fmt.font_size is not None:
+            sz = oxml.OxmlElement("w:sz")
+            sz.set(qn("w:val"), str(fmt.font_size * 2))  # half-points
+            r_pr.append(sz)
+        tbl_style_pr.append(r_pr)
+
+    has_ppr = any(
+        [
+            fmt.alignment is not None,
+            fmt.spacing_before is not None,
+            fmt.spacing_after is not None,
+        ]
+    )
+    if has_ppr:
+        p_pr = oxml.OxmlElement("w:pPr")
+        if fmt.alignment is not None:
+            jc = oxml.OxmlElement("w:jc")
+            alignment_map = {
+                0: "left",
+                1: "center",
+                2: "right",
+                3: "both",
+                4: "distribute",
+                5: "mediumKashida",
+                7: "highKashida",
+                8: "lowKashida",
+                9: "thaiDistribute",
+            }
+            jc.set(qn("w:val"), alignment_map.get(int(fmt.alignment), "left"))
+            p_pr.append(jc)
+        if fmt.spacing_before is not None or fmt.spacing_after is not None:
+            spacing = oxml.OxmlElement("w:spacing")
+            if fmt.spacing_before is not None:
+                spacing.set(qn("w:before"), str(int(fmt.spacing_before * 20)))
+            if fmt.spacing_after is not None:
+                spacing.set(qn("w:after"), str(int(fmt.spacing_after * 20)))
+            p_pr.append(spacing)
+        tbl_style_pr.append(p_pr)
+
+    if fmt.background:
+        tc_pr = oxml.OxmlElement("w:tcPr")
+        shd = oxml.OxmlElement("w:shd")
+        shd.set(qn("w:val"), "clear")
+        shd.set(qn("w:color"), "auto")
+        shd.set(
+            qn("w:fill"),
+            f"{fmt.background[0]:02X}{fmt.background[1]:02X}{fmt.background[2]:02X}",
+        )
+        tc_pr.append(shd)
+        tbl_style_pr.append(tc_pr)
+
+    return tbl_style_pr
 
 
 def _pack_section(  # noqa: C901, PLR0912
@@ -661,5 +925,7 @@ def _pack_table_cell(
 
     if cell.vmerge is not None:
         docx_cell._tc.vMerge = (  # noqa: SLF001
-            ST_Merge.RESTART if cell.vmerge == "restart" else ST_Merge.CONTINUE
+            docx_simpletypes.ST_Merge.RESTART
+            if cell.vmerge == "restart"
+            else docx_simpletypes.ST_Merge.CONTINUE
         )

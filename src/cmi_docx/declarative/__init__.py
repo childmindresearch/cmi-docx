@@ -13,6 +13,11 @@ from cmi_docx.declarative.section import (
     Section,
     SectionProperties,
 )
+from cmi_docx.declarative.styles import (
+    ParagraphStyleDefinition,
+    TableSectionFormat,
+    TableStyleDefinition,
+)
 from cmi_docx.declarative.table import Table, TableCell, TableRow
 
 __all__ = [
@@ -25,11 +30,14 @@ __all__ = [
     "Header",
     "ImageRun",
     "Paragraph",
+    "ParagraphStyleDefinition",
     "Section",
     "SectionProperties",
     "Tab",
     "Table",
     "TableCell",
     "TableRow",
+    "TableSectionFormat",
+    "TableStyleDefinition",
     "TextRun",
 ]
