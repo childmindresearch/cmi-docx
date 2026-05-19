@@ -487,7 +487,7 @@ def _pack_section(  # noqa: C901, PLR0912
                         docx_enum_section.WD_ORIENTATION.LANDSCAPE
                     )
                 elif orientation == "portrait":
-                    if width < height:  # ty:ignore[unsupported-operator]
+                    if width > height:  # ty:ignore[unsupported-operator]
                         width, height = height, width
                     current_section.page_width = width  # ty:ignore[invalid-assignment]
                     current_section.page_height = height  # ty:ignore[invalid-assignment]
