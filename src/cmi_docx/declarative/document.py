@@ -179,7 +179,7 @@ def _apply_style_definitions(
             _apply_table_style_definition(docx_doc, defn)
 
 
-def _apply_paragraph_style_definition(  # noqa: C901, PLR0912
+def _apply_paragraph_style_definition(  # noqa: C901, PLR0912, PLR0915
     docx_doc: docx_document.Document,
     defn: styles_mod.ParagraphStyleDefinition,
 ) -> None:
@@ -205,6 +205,21 @@ def _apply_paragraph_style_definition(  # noqa: C901, PLR0912
     font = style.font
     if defn.font is not None:
         font.name = defn.font
+        # font.element is the <w:style> element; <w:rFonts> lives inside <w:rPr>.
+        # We must search the nested <w:rPr> to locate it.
+        rpr = font.element.find(qn("w:rPr"))
+        r_fonts = rpr.find(qn("w:rFonts")) if rpr is not None else None
+        if r_fonts is None:
+            # Built-in styles may already have <w:rPr> but no <w:rFonts>;
+            # create and insert it as the first child of <w:rPr>.
+            if rpr is None:
+                rpr = etree.SubElement(font.element, qn("w:rPr"))
+            r_fonts = etree.SubElement(rpr, qn("w:rFonts"))
+            rpr.insert(0, r_fonts)
+        r_fonts.set(qn("w:ascii"), defn.font)
+        r_fonts.set(qn("w:hAnsi"), defn.font)
+        r_fonts.attrib.pop(qn("w:asciiTheme"), None)
+        r_fonts.attrib.pop(qn("w:hAnsiTheme"), None)
     if defn.font_size is not None:
         font.size = shared.Pt(defn.font_size)
     if defn.bold is not None:

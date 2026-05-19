@@ -171,3 +171,32 @@ async def test_table_style_first_row_xml() -> None:
     shd = tc_pr.find(qn("w:shd"))
     assert shd is not None
     assert shd.get(qn("w:fill")) == "003366"
+
+
+@pytest.mark.asyncio
+async def test_heading_style_font_overrides_theme() -> None:
+    """Test that setting font on a built-in heading style removes theme font attributes.
+
+    When font="Arial" is applied to the built-in "Heading 1" style via
+    ParagraphStyleDefinition, the resolved style must:
+    - Report style.font.name == "Arial" (the explicit font wins).
+    - Have no w:asciiTheme attribute on the <w:rFonts> element, so the theme
+      font cannot silently override the explicit font name at render time.
+    """
+    doc = _make_doc(
+        [declarative.ParagraphStyleDefinition(name="Heading 1", font="Arial")],
+        sections=[
+            declarative.Section(
+                children=[declarative.Paragraph(heading=1, text="Hello")],
+            )
+        ],
+    )
+
+    docx = await doc.to_docx()
+
+    style = docx.styles["Heading 1"]
+    assert style.font.name == "Arial"
+
+    r_fonts = style.font.element.rPr.find(qn("w:rFonts"))
+    assert r_fonts is not None
+    assert r_fonts.get(qn("w:asciiTheme")) is None
