@@ -464,33 +464,54 @@ def _pack_section(  # noqa: C901, PLR0912
             if child.condition() and isinstance(child, paragraph.Paragraph):  # ty:ignore[unresolved-attribute] already awaited.
                 paragraphs_inserted += 1
 
-    docx_section = docx_doc.add_section()
+    current_section: docx_section.Section = docx_doc.sections[-1]
 
     if sec.properties:
         props = sec.properties
-        if props.page_size:
-            if "width" in props.page_size:
-                docx_section.page_width = props.page_size["width"]
-            if "height" in props.page_size:
-                docx_section.page_height = props.page_size["height"]
+        if props.page_size or props.page_orientation:
+            if props.page_size:
+                width = props.page_size.get("width") or current_section.page_width
+                height = props.page_size.get("height") or current_section.page_height
+            else:
+                width = current_section.page_width
+                height = current_section.page_height
 
-        if props.page_orientation:
-            if props.page_orientation.lower() == "landscape":
-                docx_section.orientation = docx_enum_section.WD_ORIENTATION.LANDSCAPE
-            elif props.page_orientation.lower() == "portrait":
-                docx_section.orientation = docx_enum_section.WD_ORIENTATION.PORTRAIT
+            if props.page_orientation:
+                orientation = props.page_orientation.lower()
+                if orientation == "landscape":
+                    if width < height:  # ty:ignore[unsupported-operator]
+                        width, height = height, width
+                    current_section.page_width = width  # ty:ignore[invalid-assignment]
+                    current_section.page_height = height  # ty:ignore[invalid-assignment]
+                    current_section.orientation = (
+                        docx_enum_section.WD_ORIENTATION.LANDSCAPE
+                    )
+                elif orientation == "portrait":
+                    if width < height:  # ty:ignore[unsupported-operator]
+                        width, height = height, width
+                    current_section.page_width = width  # ty:ignore[invalid-assignment]
+                    current_section.page_height = height  # ty:ignore[invalid-assignment]
+                    current_section.orientation = (
+                        docx_enum_section.WD_ORIENTATION.PORTRAIT
+                    )
+            else:
+                # Only page_size provided; apply as given, no orientation change.
+                current_section.page_width = width  # ty:ignore[invalid-assignment]
+                current_section.page_height = height  # ty:ignore[invalid-assignment]
 
     if sec.headers:
         for header_type, header in sec.headers.items():
             _pack_header(
-                docx_doc, docx_section, header_type, header, default_comment_author
+                docx_doc, current_section, header_type, header, default_comment_author
             )
 
     if sec.footers:
         for footer_type, footer in sec.footers.items():
             _pack_footer(
-                docx_doc, docx_section, footer_type, footer, default_comment_author
+                docx_doc, current_section, footer_type, footer, default_comment_author
             )
+
+    docx_doc.add_section()
 
     return paragraphs_inserted
 
