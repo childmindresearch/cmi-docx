@@ -498,6 +498,18 @@ def _pack_section(  # noqa: C901, PLR0912
                 current_section.page_width = width  # ty:ignore[invalid-assignment]
                 current_section.page_height = height  # ty:ignore[invalid-assignment]
 
+        if props.page_margins:
+            margin_attrs = {
+                "top": "top_margin",
+                "bottom": "bottom_margin",
+                "left": "left_margin",
+                "right": "right_margin",
+            }
+            for key, attr in margin_attrs.items():
+                value = props.page_margins.get(key)  # ty:ignore[invalid-argument-type] key is always a valid Literal.
+                if value is not None:
+                    setattr(current_section, attr, value)
+
     if sec.headers:
         for header_type, header in sec.headers.items():
             _pack_header(
