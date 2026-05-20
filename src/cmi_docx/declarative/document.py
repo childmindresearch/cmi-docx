@@ -143,14 +143,18 @@ class Document:
 
         paragraph_index = template.paragraph_index if template is not None else None
         insertion_offset = 0
-        for sec in self.sections:
+        for i, sec in enumerate(self.sections):
             current_index = (
                 (paragraph_index + insertion_offset)
                 if paragraph_index is not None
                 else None
             )
             elements_inserted = _pack_section(
-                docx_doc, sec, self.comment_author, current_index
+                docx_doc,
+                sec,
+                self.comment_author,
+                current_index,
+                is_last=(i == len(self.sections) - 1),
             )
             insertion_offset += elements_inserted
 
@@ -430,6 +434,8 @@ def _pack_section(  # noqa: C901, PLR0912
     sec: section.Section,
     default_comment_author: str | None,
     paragraph_index: int | None = None,
+    *,
+    is_last: bool = False,
 ) -> int:
     """Pack a Section into a python-docx document.
 
@@ -439,6 +445,8 @@ def _pack_section(  # noqa: C901, PLR0912
         default_comment_author: Default author for comments.
         paragraph_index: If provided, insert children starting at this paragraph
             index instead of appending.
+        is_last: If True, skip adding a new section at the end (avoids a
+            trailing blank page after the final section).
 
     Returns:
         The number of block elements inserted (for offset tracking).
@@ -522,7 +530,8 @@ def _pack_section(  # noqa: C901, PLR0912
                 docx_doc, current_section, footer_type, footer, default_comment_author
             )
 
-    docx_doc.add_section()
+    if not is_last:
+        docx_doc.add_section()
 
     return paragraphs_inserted
 
