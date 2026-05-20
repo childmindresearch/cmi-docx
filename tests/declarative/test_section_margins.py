@@ -30,7 +30,7 @@ async def test_all_margins() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.top_margin == Inches(2)
     assert section.bottom_margin == Inches(2)
     assert section.left_margin == Inches(2)
@@ -60,7 +60,7 @@ async def test_partial_margins() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.top_margin == Inches(1.5)
     assert section.left_margin == Inches(1.5)
     assert section.bottom_margin != Inches(1.5)
@@ -84,7 +84,7 @@ async def test_no_margins() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.top_margin is not None
     assert section.bottom_margin is not None
     assert section.left_margin is not None

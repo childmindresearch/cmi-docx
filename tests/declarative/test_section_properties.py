@@ -25,7 +25,7 @@ async def test_landscape_no_page_size() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.page_width is not None
     assert section.page_height is not None
     assert section.page_width > section.page_height
@@ -52,7 +52,7 @@ async def test_landscape_with_page_size() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.page_width is not None
     assert section.page_height is not None
     assert section.page_width > section.page_height
@@ -77,7 +77,7 @@ async def test_portrait_no_page_size() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.page_width is not None
     assert section.page_height is not None
     assert section.page_width < section.page_height
@@ -99,7 +99,7 @@ async def test_no_orientation() -> None:
     )
 
     docx_doc = await doc.to_docx()
-    section = docx_doc.sections[-2]
+    section = docx_doc.sections[-1]
     assert section.page_width is not None
     assert section.page_height is not None
 
@@ -109,13 +109,8 @@ async def test_landscape_multi_section() -> None:
     """Test that landscape properties apply to the correct section index.
 
     With 2 declarative sections (portrait then landscape), the resulting
-    docx_doc.sections list has 3 entries: sections[0] is portrait, sections[1]
-    is landscape, and sections[2] is the trailing empty section added by the
-    final add_section() call.
-
-    This test would have failed with the old off-by-one bug, where landscape
-    properties were applied to sections[2] (the trailing sentinel) instead of
-    sections[1] (the second declarative section).
+    docx_doc.sections list has exactly 2 entries: sections[0] is portrait
+    and sections[1] is landscape.
     """
     doc = declarative.Document(
         sections=[
@@ -137,8 +132,8 @@ async def test_landscape_multi_section() -> None:
     docx_doc = await doc.to_docx()
     sections = list(docx_doc.sections)
 
-    # 2 declarative sections produce 3 total sections (trailing sentinel at [-1]).
-    expected_section_count = 3
+    # 2 declarative sections produce exactly 2 sections.
+    expected_section_count = 2
     assert len(sections) == expected_section_count
 
     portrait_section = sections[0]
