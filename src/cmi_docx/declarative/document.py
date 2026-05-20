@@ -665,21 +665,21 @@ def _pack_paragraph_into_existing(  # noqa: C901, PLR0912
     if para.heading:
         docx_para.style = f"Heading {para.heading}"
 
-    if para.alignment:
+    if para.alignment is not None:
         docx_para.alignment = para.alignment
 
     fmt = docx_para.paragraph_format
-    if para.spacing_before:
+    if para.spacing_before is not None:
         fmt.space_before = shared.Pt(para.spacing_before)
-    if para.spacing_after:
+    if para.spacing_after is not None:
         fmt.space_after = shared.Pt(para.spacing_after)
-    if para.line_spacing:
+    if para.line_spacing is not None:
         fmt.line_spacing = para.line_spacing
-    if para.left_indent:
+    if para.left_indent is not None:
         fmt.left_indent = shared.Pt(para.left_indent)
-    if para.right_indent:
+    if para.right_indent is not None:
         fmt.right_indent = shared.Pt(para.right_indent)
-    if para.first_line_indent:
+    if para.first_line_indent is not None:
         fmt.first_line_indent = shared.Pt(para.first_line_indent)
     if para.keep_together is not None:
         fmt.keep_together = para.keep_together
