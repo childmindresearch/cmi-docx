@@ -22,6 +22,8 @@ class SectionProperties:
     Attributes:
         page_size: Page dimensions.
         page_orientation: 'portrait' or 'landscape'.
+        page_margins: Page margin sizes. Keys are 'top', 'bottom', 'left', 'right';
+            values are in EMU (English Metric Units). All keys are optional.
         page_numbering: Page numbering configuration.
         columns: Column configuration (dict with 'count', 'space', 'separator').
         vertical_align: Vertical alignment ('top', 'center', 'bottom', 'both').
@@ -32,6 +34,7 @@ class SectionProperties:
 
     page_size: dict[Literal["width", "height"], int] | None = None
     page_orientation: Literal["portrait", "landscape"] | None = None
+    page_margins: dict[Literal["top", "bottom", "left", "right"], int] | None = None
     page_numbering: dict[Literal["start", "format"], int | str] | None = None
     columns: dict[Literal["count", "space", "separator"], int | bool] | None = None
     vertical_align: Literal["top", "center", "bottom", "both"] | None = None
