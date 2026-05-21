@@ -2,6 +2,7 @@
 
 import asyncio
 import dataclasses
+import datetime
 import io
 import pathlib
 from collections.abc import Sequence
@@ -85,6 +86,7 @@ class Document:
         keywords: str | None = None,
         category: str | None = None,
         comments: str | None = None,
+        version: str | None = None,
         comment_author: str | None = None,
         styles: (
             list[styles_mod.ParagraphStyleDefinition | styles_mod.TableStyleDefinition]
@@ -99,6 +101,7 @@ class Document:
         self.description = description
         self.keywords = keywords
         self.category = category
+        self.version = version
         self.comments = comments
         self.comment_author = comment_author
         self.styles = styles
@@ -137,6 +140,13 @@ class Document:
             docx_doc.core_properties.keywords = self.keywords
         if self.category:
             docx_doc.core_properties.category = self.category
+        if self.version:
+            docx_doc.core_properties.version = self.version
+        if self.comments:
+            docx_doc.core_properties.comments = self.comments
+        now = datetime.datetime.now(datetime.UTC)
+        docx_doc.core_properties.created = now
+        docx_doc.core_properties.modified = now
 
         if self.styles:
             _apply_style_definitions(docx_doc, self.styles)
