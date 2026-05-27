@@ -911,6 +911,17 @@ def _apply_column_widths(
 ) -> None:
     """Apply fixed column widths to a python-docx table.
 
+    Word XML Elements & Attributes Referenced:
+        w:tblW: Table Width property. Defines the overall width of the entire table.
+        w:w: Width value attribute. Holds the numeric measurement for an element.
+        w:type: Measurement unit type.
+        w:tr: Table Row element.
+        w:tc: Table Cell element.
+        w:gridSpan: Grid span property. Dictates how many logical columns a horizontally
+                    merged cell spans.
+        w:val: Value attribute.
+        w:tcW: Table Cell Width property.
+
     Args:
         tbl: The python-docx Table to modify.
         column_widths: List of widths in twips (DXA), one per column.
@@ -928,6 +939,26 @@ def _apply_column_widths(
 
     for index, width in enumerate(column_widths):
         tbl.columns[index].width = shared.Twips(width)
+
+    total_width = sum(column_widths)
+    tblW = tbl._tbl.tblPr.find(qn("w:tblW"))  # noqa: SLF001, N806
+    if tblW is not None:
+        tblW.set(qn("w:w"), str(total_width))
+        tblW.set(qn("w:type"), "dxa")
+
+    for tr in tbl._tbl.findall(qn("w:tr")):  # noqa: SLF001
+        col_start = 0
+        for tc in tr.findall(qn("w:tc")):
+            gridSpan_el = (  # noqa: N806
+                tc.tcPr.find(qn("w:gridSpan")) if tc.tcPr is not None else None
+            )
+            span = int(gridSpan_el.get(qn("w:val"))) if gridSpan_el is not None else 1
+            cell_width = sum(column_widths[col_start : col_start + span])
+            tcW = tc.tcPr.find(qn("w:tcW")) if tc.tcPr is not None else None  # noqa: N806
+            if tcW is not None:
+                tcW.set(qn("w:w"), str(cell_width))
+                tcW.set(qn("w:type"), "dxa")
+            col_start += span
 
 
 def _pack_table_row(
