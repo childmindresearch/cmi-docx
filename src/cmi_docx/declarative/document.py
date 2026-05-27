@@ -893,15 +893,15 @@ def _pack_table(
 
     if tbl.layout == "autofit":
         docx_table.autofit = True
-    else:
+    elif tbl.layout == "fixed" or tbl.column_widths is not None:
         # column_widths or layout="fixed" both imply fixed layout
-        if tbl.layout == "fixed" or tbl.column_widths is not None:
-            docx_table.autofit = False
-        if tbl.column_widths is not None:
-            _apply_column_widths(docx_table, tbl.column_widths, num_cols)
+        docx_table.autofit = False
 
     for row_idx, row in enumerate(filtered_rows):
         _pack_table_row(docx_doc, docx_table.rows[row_idx], row, default_comment_author)  # ty:ignore[invalid-argument-type] already awaited.
+
+    if tbl.layout != "autofit" and tbl.column_widths is not None:
+        _apply_column_widths(docx_table, tbl.column_widths, num_cols)
 
 
 def _apply_column_widths(
@@ -936,8 +936,9 @@ def _apply_column_widths(
             f"must match number of columns ({num_cols})"
         )
         raise ValueError(msg)
-    for i, width in enumerate(column_widths):
-        tbl.columns[i].width = shared.Twips(width)
+
+    for index, width in enumerate(column_widths):
+        tbl.columns[index].width = shared.Twips(width)
 
     total_width = sum(column_widths)
     tblW = tbl._tbl.tblPr.find(qn("w:tblW"))  # noqa: SLF001, N806
