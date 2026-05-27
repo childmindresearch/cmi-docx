@@ -76,10 +76,6 @@ class Table(base.Component):
         column_widths: List of column widths in twips (DXA). 1440 twips equals
             1 inch; approximately 567 twips equals 1cm. Setting this implies
             fixed layout (autofit is disabled automatically).
-        width: Table width configuration (dict with 'size' and 'type' keys).
-        borders: Table border configuration.
-        alignment: Table alignment ('left', 'center', 'right').
-        indent: Table indent from left margin.
         layout: Table layout type. ``"fixed"`` sets fixed layout (autofit
             disabled). ``"autofit"`` sets autofit layout and suppresses column
             widths even if ``column_widths`` is also provided.
@@ -91,9 +87,5 @@ class Table(base.Component):
         | Callable[[], MutableSequence[TableRow | Coroutine[None, None, TableRow]]]
     )
     column_widths: Sequence[int] | None = None
-    width: dict[str, int | str] | None = None
-    borders: dict[str, dict[str, str | int]] | None = None
-    alignment: str | None = None
-    indent: int | None = None
     layout: Literal["autofit", "fixed"] | None = None
     style: str | None = None
