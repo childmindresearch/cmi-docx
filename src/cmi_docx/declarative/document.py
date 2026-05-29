@@ -5,7 +5,7 @@ import dataclasses
 import datetime
 import io
 import pathlib
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 
 import docx
 from docx import document as docx_document
@@ -902,6 +902,25 @@ def _pack_table(
 
     if tbl.layout != "autofit" and tbl.column_widths is not None:
         _apply_column_widths(docx_table, tbl.column_widths, num_cols)
+
+    if tbl.borders:
+        _apply_table_borders(docx_table, tbl.borders)
+
+
+def _apply_table_borders(
+    tbl: docx_table.Table, borders: Iterable[table.TableBorder]
+) -> None:
+    """Applies the table borders to the whole table."""
+    tbl_borders = tbl._tblPr.find(qn("w:tblBorders"))  # noqa: SLF001
+    if tbl_borders is None:
+        tbl_borders = oxml.OxmlElement("w:tblBorders")
+        tbl._tblPr.append(tbl_borders)  # noqa: SLF001
+    for border in borders:
+        element = oxml.OxmlElement(f"w:{border.side}")
+        element.set(qn("w:sz"), str(border.sz))
+        element.set(qn("w:val"), border.val)
+        element.set(qn("w:color"), border.hex_color)
+        tbl_borders.append(element)
 
 
 def _apply_column_widths(

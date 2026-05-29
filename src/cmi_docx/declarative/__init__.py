@@ -1,7 +1,5 @@
 """Declarative API for creating Word documents."""
 
-# sergey: disable-file: IMP001 # Allow barrel exports.
-
 from cmi_docx.declarative.base import Component
 from cmi_docx.declarative.document import Document, DocumentTemplate
 from cmi_docx.declarative.image import ImageRun
@@ -18,7 +16,7 @@ from cmi_docx.declarative.styles import (
     TableSectionFormat,
     TableStyleDefinition,
 )
-from cmi_docx.declarative.table import Table, TableCell, TableRow
+from cmi_docx.declarative.table import Table, TableBorder, TableCell, TableRow
 
 __all__ = [
     "BlockChildren",
@@ -35,6 +33,7 @@ __all__ = [
     "SectionProperties",
     "Tab",
     "Table",
+    "TableBorder",
     "TableCell",
     "TableRow",
     "TableSectionFormat",
