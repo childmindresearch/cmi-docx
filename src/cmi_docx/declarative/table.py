@@ -1,4 +1,7 @@
-"""Table components for declarative documents."""
+"""Table components for declarative documents.
+
+See also https://ooxml.dev/docs/tables/ for details.
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,28 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass
+class TableBorder:
+    """Defines a table border.
+
+    Attributes:
+        side: The side of the cell for the border.
+        val: The type of border; only single is currently supported.
+        sz: Size of the border.
+        color: Color of the border (RGB); 0-255.
+    """
+
+    side: Literal["top", "left", "bottom", "right", "insideH", "insideV"]
+    sz: int = 1
+    color: tuple[int, int, int] = (0, 0, 0)
+    val: Literal["single"] = "single"
+
+    @property
+    def hex_color(self) -> str:
+        """Color as hexadecimal."""
+        return f"{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x}".upper()
+
+
+@dataclasses.dataclass
 class TableCell(base.Component):
     """A table cell containing paragraphs or nested tables.
 
@@ -20,7 +45,6 @@ class TableCell(base.Component):
         children: List of Paragraph or Table components, or coroutines that
             resolve to these types. May be a zero-argument callable for lazy
             evaluation (useful with ``condition``).
-        borders: Cell border configuration.
         grid_span: Number of columns this cell spans (horizontal merge).
             Defaults to None (no spanning).
         vmerge: Vertical merge role. ``"restart"`` marks the top cell of a
@@ -44,7 +68,6 @@ class TableCell(base.Component):
         ]
         | None
     ) = None
-    borders: dict[str, dict[str, str | int]] | None = None
     grid_span: int | None = None
     vmerge: Literal["restart", "continue"] | None = None
 
@@ -80,6 +103,7 @@ class Table(base.Component):
             disabled). ``"autofit"`` sets autofit layout and suppresses column
             widths even if ``column_widths`` is also provided.
         style: Table style name.
+        borders: Cell border configuration.
     """
 
     rows: (
@@ -89,3 +113,4 @@ class Table(base.Component):
     column_widths: Sequence[int] | None = None
     layout: Literal["autofit", "fixed"] | None = None
     style: str | None = None
+    borders: MutableSequence[TableBorder] | None = None
