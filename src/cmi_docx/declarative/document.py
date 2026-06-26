@@ -6,6 +6,7 @@ import datetime
 import io
 import pathlib
 from collections.abc import Iterable, Sequence
+from typing import Literal
 
 import docx
 from docx import document as docx_document
@@ -23,6 +24,8 @@ from lxml import (
 )
 
 from cmi_docx import document as imperative_document
+from cmi_docx import styles as cmi_styles
+from cmi_docx import table as cmi_table
 from cmi_docx.declarative import image, paragraph, section, table
 from cmi_docx.declarative import styles as styles_mod
 
@@ -517,14 +520,14 @@ def _pack_section(  # noqa: C901, PLR0912
                 current_section.page_height = height  # ty:ignore[invalid-assignment]
 
         if props.page_margins:
-            margin_attrs = {
+            margin_attrs: dict[Literal["top", "bottom", "left", "right"], str] = {
                 "top": "top_margin",
                 "bottom": "bottom_margin",
                 "left": "left_margin",
                 "right": "right_margin",
             }
             for key, attr in margin_attrs.items():
-                value = props.page_margins.get(key)  # ty:ignore[invalid-argument-type] key is always a valid Literal.
+                value = props.page_margins.get(key)
                 if value is not None:
                     setattr(current_section, attr, value)
 
@@ -1045,4 +1048,25 @@ def _pack_table_cell(
             docx_simpletypes.ST_Merge.RESTART
             if cell.vmerge == "restart"
             else docx_simpletypes.ST_Merge.CONTINUE
+        )
+
+    # Apply cell-level styling.
+    background_rgb: tuple[int, int, int] | None = cell.background_color
+    cell_borders: list[cmi_styles.CellBorder] | None = None
+    if cell.borders:
+        cell_borders = [
+            cmi_styles.CellBorder(
+                sides=(border.side,),
+                sz=border.sz,
+                val=border.val,
+                color=border.hex_color,
+            )
+            for border in cell.borders
+        ]
+    if background_rgb is not None or cell_borders is not None:
+        cmi_table.ExtendCell(docx_cell).format(
+            cmi_styles.CellStyle(
+                background_rgb=background_rgb,
+                borders=cell_borders,
+            )
         )

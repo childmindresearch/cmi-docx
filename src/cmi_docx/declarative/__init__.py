@@ -16,11 +16,18 @@ from cmi_docx.declarative.styles import (
     TableSectionFormat,
     TableStyleDefinition,
 )
-from cmi_docx.declarative.table import Table, TableBorder, TableCell, TableRow
+from cmi_docx.declarative.table import (
+    CellBorder,
+    Table,
+    TableBorder,
+    TableCell,
+    TableRow,
+)
 
 __all__ = [
     "BlockChildren",
     "Break",
+    "CellBorder",
     "Component",
     "Document",
     "DocumentTemplate",
