@@ -456,3 +456,150 @@ async def test_table_layout_autofit_overrides_column_widths() -> None:
 
     assert docx_table.autofit is True
     assert docx_table.columns[0].width != shared.Twips(1440)
+
+
+@pytest.mark.asyncio
+async def test_table_cell_background_color() -> None:
+    """Test that background_color sets w:shd w:fill on the cell's tcPr.
+
+    A 1x1 table with background_color=(255, 0, 0) should produce a w:shd
+    element with w:fill="FF0000" in the cell's tcPr.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Cell")],
+                                        background_color=(255, 0, 0),
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    tc_pr = docx_doc.tables[0].rows[0].cells[0]._tc.tcPr
+    assert tc_pr is not None
+    shd = tc_pr.find(qn("w:shd"))
+    assert shd is not None
+    assert shd.get(qn("w:fill")) == "FF0000"
+
+
+@pytest.mark.asyncio
+async def test_table_cell_borders() -> None:
+    """Test that borders sets w:tcBorders with correct child elements.
+
+    A 1x1 table with top (single, sz=8, black) and bottom (dashed, sz=4, red)
+    borders should produce a w:tcBorders element containing w:top and w:bottom
+    with the corresponding attributes.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Cell")],
+                                        borders=[
+                                            declarative.CellBorder(
+                                                side="top",
+                                                sz=8,
+                                                color=(0, 0, 0),
+                                                val="single",
+                                            ),
+                                            declarative.CellBorder(
+                                                side="bottom",
+                                                sz=4,
+                                                color=(255, 0, 0),
+                                                val="dashed",
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    tc_pr = docx_doc.tables[0].rows[0].cells[0]._tc.tcPr
+    assert tc_pr is not None
+    tc_borders = tc_pr.find(qn("w:tcBorders"))
+    assert tc_borders is not None
+
+    top = tc_borders.find(qn("w:top"))
+    assert top is not None
+    assert top.get(qn("w:sz")) == "8"
+    assert top.get(qn("w:val")) == "single"
+    assert top.get(qn("w:color")) == "000000"
+
+    bottom = tc_borders.find(qn("w:bottom"))
+    assert bottom is not None
+    assert bottom.get(qn("w:sz")) == "4"
+    assert bottom.get(qn("w:val")) == "dashed"
+    assert bottom.get(qn("w:color")) == "FF0000"
+
+
+@pytest.mark.asyncio
+async def test_table_cell_background_and_borders() -> None:
+    """Test that background_color and borders can be applied together.
+
+    A 1x1 table with both background_color=(0, 128, 255) and a start border
+    should produce w:shd with w:fill="0080FF" and a w:tcBorders element
+    containing a w:start child element.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Cell")],
+                                        background_color=(0, 128, 255),
+                                        borders=[
+                                            declarative.CellBorder(
+                                                side="start",
+                                                sz=6,
+                                                color=(0, 0, 0),
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    tc_pr = docx_doc.tables[0].rows[0].cells[0]._tc.tcPr
+    assert tc_pr is not None
+
+    shd = tc_pr.find(qn("w:shd"))
+    assert shd is not None
+    assert shd.get(qn("w:fill")) == "0080FF"
+
+    tc_borders = tc_pr.find(qn("w:tcBorders"))
+    assert tc_borders is not None
+    start = tc_borders.find(qn("w:start"))
+    assert start is not None

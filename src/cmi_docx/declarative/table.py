@@ -38,6 +38,30 @@ class TableBorder:
 
 
 @dataclasses.dataclass
+class CellBorder:
+    """Defines a border for an individual table cell.
+
+    Attributes:
+        side: The side of the cell for the border. Valid sides are ``"top"``,
+            ``"bottom"``, ``"start"`` (left in LTR documents), and ``"end"``
+            (right in LTR documents).
+        val: The type of border line.
+        sz: Size of the border in eighths of a point (8 = 1pt).
+        color: Color of the border as an RGB tuple; each component 0-255.
+    """
+
+    side: Literal["top", "bottom", "start", "end"]
+    sz: int = 1
+    color: tuple[int, int, int] = (0, 0, 0)
+    val: Literal["single", "dashed"] = "single"
+
+    @property
+    def hex_color(self) -> str:
+        """Color as uppercase hexadecimal string (no leading '#')."""
+        return f"{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x}".upper()
+
+
+@dataclasses.dataclass
 class TableCell(base.Component):
     """A table cell containing paragraphs or nested tables.
 
@@ -50,6 +74,10 @@ class TableCell(base.Component):
         vmerge: Vertical merge role. ``"restart"`` marks the top cell of a
             vertical merge group; ``"continue"`` marks subsequent cells in the
             group. Defaults to None.
+        borders: Per-side border definitions for this cell. Defaults to None.
+        background_color: RGB background fill colour for the cell as a
+            ``(red, green, blue)`` tuple; each component 0-255. Defaults to
+            None (no background).
     """
 
     children: (
@@ -70,6 +98,8 @@ class TableCell(base.Component):
     ) = None
     grid_span: int | None = None
     vmerge: Literal["restart", "continue"] | None = None
+    borders: MutableSequence[CellBorder] | None = None
+    background_color: tuple[int, int, int] | None = None
 
 
 @dataclasses.dataclass

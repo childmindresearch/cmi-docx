@@ -73,7 +73,7 @@ class ExtendCell:
             shading = oxml.parse_xml(
                 (
                     r'<w:shd {} w:fill="'
-                    f"{rgb_to_hex(*style.background_rgb)}"
+                    f"{rgb_to_hex(*style.background_rgb).lstrip('#')}"
                     r'"/>'
                 ).format(
                     ns.nsdecls("w"),
