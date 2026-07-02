@@ -78,6 +78,9 @@ class TableCell(base.Component):
         background_color: RGB background fill colour for the cell as a
             ``(red, green, blue)`` tuple; each component 0-255. Defaults to
             None (no background).
+        vertical_alignment: Vertical alignment of content within the cell.
+            ``"top"``, ``"center"``, or ``"bottom"``. Defaults to None (uses
+            Word's default, which is top).
     """
 
     children: (
@@ -100,6 +103,7 @@ class TableCell(base.Component):
     vmerge: Literal["restart", "continue"] | None = None
     borders: MutableSequence[CellBorder] | None = None
     background_color: tuple[int, int, int] | None = None
+    vertical_alignment: Literal["top", "center", "bottom"] | None = None
 
 
 @dataclasses.dataclass

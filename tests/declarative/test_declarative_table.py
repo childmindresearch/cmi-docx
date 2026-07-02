@@ -603,3 +603,88 @@ async def test_table_cell_background_and_borders() -> None:
     assert tc_borders is not None
     start = tc_borders.find(qn("w:start"))
     assert start is not None
+
+
+@pytest.mark.asyncio
+async def test_table_cell_vertical_alignment() -> None:
+    """Test that vertical_alignment sets w:vAlign on the cell's tcPr.
+
+    A 1x3 table with cells set to "top", "center", and "bottom" respectively
+    should produce a w:vAlign element with the matching w:val in each cell's
+    tcPr.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Top")],
+                                        vertical_alignment="top",
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Center")],
+                                        vertical_alignment="center",
+                                    ),
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Bottom")],
+                                        vertical_alignment="bottom",
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    cells = docx_doc.tables[0].rows[0].cells
+
+    top_tc_pr = cells[0]._tc.tcPr
+    assert top_tc_pr is not None
+    assert top_tc_pr.find(qn("w:vAlign")).get(qn("w:val")) == "top"
+
+    center_tc_pr = cells[1]._tc.tcPr
+    assert center_tc_pr is not None
+    assert center_tc_pr.find(qn("w:vAlign")).get(qn("w:val")) == "center"
+
+    bottom_tc_pr = cells[2]._tc.tcPr
+    assert bottom_tc_pr is not None
+    assert bottom_tc_pr.find(qn("w:vAlign")).get(qn("w:val")) == "bottom"
+
+
+@pytest.mark.asyncio
+async def test_table_cell_vertical_alignment_none_by_default() -> None:
+    """Test that omitting vertical_alignment does not add a w:vAlign element.
+
+    A 1x1 table with no vertical_alignment set should have either no tcPr
+    element at all, or a tcPr without a w:vAlign child.
+    """
+    doc = declarative.Document(
+        sections=[
+            declarative.Section(
+                children=[
+                    declarative.Table(
+                        rows=[
+                            declarative.TableRow(
+                                children=[
+                                    declarative.TableCell(
+                                        children=[declarative.Paragraph(text="Cell")],
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    docx_doc = await doc.to_docx()
+    tc_pr = docx_doc.tables[0].rows[0].cells[0]._tc.tcPr
+    assert tc_pr is None or tc_pr.find(qn("w:vAlign")) is None
