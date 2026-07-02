@@ -15,6 +15,7 @@ from docx import section as docx_section
 from docx import table as docx_table
 from docx.enum import section as docx_enum_section
 from docx.enum import style as docx_style
+from docx.enum import table as docx_enum_table
 from docx.enum import text as docx_text
 from docx.oxml import simpletypes as docx_simpletypes
 from docx.oxml.ns import qn
@@ -1070,3 +1071,11 @@ def _pack_table_cell(
                 borders=cell_borders,
             )
         )
+
+    if cell.vertical_alignment is not None:
+        vertical_alignment_map = {
+            "top": docx_enum_table.WD_ALIGN_VERTICAL.TOP,
+            "center": docx_enum_table.WD_ALIGN_VERTICAL.CENTER,
+            "bottom": docx_enum_table.WD_ALIGN_VERTICAL.BOTTOM,
+        }
+        docx_cell.vertical_alignment = vertical_alignment_map[cell.vertical_alignment]
