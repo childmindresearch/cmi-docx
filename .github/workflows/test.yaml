@@ -40,11 +40,6 @@ jobs:
             --log-level=DEBUG \
             --verbose
         shell: bash
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
 
   ruff:
     runs-on: ubuntu-latest
